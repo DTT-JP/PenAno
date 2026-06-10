@@ -44,6 +44,7 @@
       btnZoomIn:       $('btnZoomIn'),
       zoomInput:       $('zoomInput'),
       btnZoomReset:    $('btnZoomReset'),
+      btnZoomCenter:   $('btnZoomCenter'),
 
       btnModeSelect:   $('btnModeSelect'),
       btnModeAdd:      $('btnModeAdd'),
@@ -96,6 +97,7 @@
     els.btnZoomIn.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomIn()));
     els.btnZoomOut.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomOut()));
     els.btnZoomReset.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
+    els.btnZoomCenter.addEventListener('click', () => { CanvasManager.centerImage(); });
     els.zoomInput.addEventListener('change', onZoomInputChange);
     els.zoomInput.addEventListener('blur', onZoomInputChange);
 

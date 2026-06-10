@@ -615,9 +615,11 @@ html, body {
 }
 
 .canvas-wrapper {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   /* size set by JS */
-  transform-origin: center center;
+  transform-origin: 0 0;
 }
 
 #mainCanvas {

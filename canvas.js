@@ -84,15 +84,11 @@ const CanvasManager = (() => {
   }
 
   function applyTransform() {
-    // Clamp offset so image doesn't go too far off-screen (allow edges to reach center)
-    const aW = area.clientWidth;
-    const aH = area.clientHeight;
-    const dW = _imgW * _zoom;
-    const dH = _imgH * _zoom;
-    const minOX = Math.min(0, aW - dW);
-    const minOY = Math.min(0, aH - dH);
-    const maxOX = Math.max(0, aW - dW);
-    const maxOY = Math.max(0, aH - dH);
+    // Clamp offset so image doesn't go too far off-screen (allow almost infinite panning)
+    const minOX = -999999;
+    const minOY = -999999;
+    const maxOX = 999999;
+    const maxOY = 999999;
     _offsetX = Math.max(minOX, Math.min(maxOX, _offsetX));
     _offsetY = Math.max(minOY, Math.min(maxOY, _offsetY));
 
@@ -108,13 +104,18 @@ const CanvasManager = (() => {
   function setZoom(z, pivotScreenX, pivotScreenY) {
     const oldZ = _zoom;
     _zoom = Math.max(0.1, Math.min(8, z));
+    let px, py;
     if (pivotScreenX !== undefined) {
       // Zoom around pivot point
-      const px = pivotScreenX - area.getBoundingClientRect().left;
-      const py = pivotScreenY - area.getBoundingClientRect().top;
-      _offsetX = px - (px - _offsetX) * (_zoom / oldZ);
-      _offsetY = py - (py - _offsetY) * (_zoom / oldZ);
+      px = pivotScreenX - area.getBoundingClientRect().left;
+      py = pivotScreenY - area.getBoundingClientRect().top;
+    } else {
+      // Default: Zoom around center of the area
+      px = area.clientWidth / 2;
+      py = area.clientHeight / 2;
     }
+    _offsetX = px - (px - _offsetX) * (_zoom / oldZ);
+    _offsetY = py - (py - _offsetY) * (_zoom / oldZ);
     applyTransform();
     return _zoom;
   }
@@ -228,18 +229,8 @@ const CanvasManager = (() => {
       g.appendChild(stroke);
 
       // Label text
-      const FONT_SIZE = Math.max(10, 12 / _zoom);
-      const PADDING_V = 2 / _zoom, PADDING_H = 4 / _zoom;
-      const textEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-      textEl.setAttribute('x', r.x1 + PADDING_H);
-      textEl.setAttribute('y', r.y1 - PADDING_V);
-      textEl.setAttribute('font-size', FONT_SIZE);
-      textEl.setAttribute('fill', color);
-      textEl.setAttribute('font-family', '-apple-system, sans-serif');
-      textEl.setAttribute('font-weight', '600');
-      textEl.setAttribute('pointer-events', 'none');
-      textEl.textContent = shape.label;
-      g.appendChild(textEl);
+      // (Removed as per user request)
+
 
       if (isSelected) {
         // Handle circles at corners and midpoints
@@ -599,7 +590,7 @@ const CanvasManager = (() => {
   function getImageSize() { return { w: _imgW, h: _imgH }; }
 
   return {
-    init, loadImage, fitToView, resetZoom,
+    init, loadImage, fitToView, resetZoom, centerImage,
     setZoom, getZoom, zoomIn, zoomOut,
     setMode, getMode,
     setShapes, setLabelColors, setSelectedIdx, getSelectedIdx,
