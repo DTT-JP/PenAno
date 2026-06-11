@@ -13,13 +13,19 @@ const CanvasManager = (() => {
   let _labelColors = {};
   let _drag = null;
   let _onShapesChanged = null;
+  let _annotationLayer = null;
+  let _crosshairLayer = null;
+  let _crosshairH = null;
+  let _crosshairV = null;
 
   function init(canvasEl, svgEl, wrapperEl, areaEl) {
     canvas = canvasEl; svg = svgEl; wrapper = wrapperEl; area = areaEl;
+    initSvgLayers();
     area.addEventListener('pointerdown', onPointerDown, { passive: false });
     area.addEventListener('pointermove', onPointerMove, { passive: false });
+    area.addEventListener('pointerleave', onPointerLeave, { passive: false });
     area.addEventListener('pointerup',   onPointerUp,   { passive: false });
-    area.addEventListener('pointercancel', onPointerUp, { passive: false });
+    area.addEventListener('pointercancel', onPointerCancel, { passive: false });
     area.addEventListener('touchstart', onTouchStart, { passive: false });
     area.addEventListener('touchmove',  onTouchMove,  { passive: false });
     area.addEventListener('touchend',   onTouchEnd,   { passive: false });
@@ -62,6 +68,7 @@ const CanvasManager = (() => {
     wrapper.style.transform = `translate(${_offsetX}px,${_offsetY}px) scale(${_zoom})`;
     wrapper.style.transformOrigin = '0 0';
     svg.setAttribute('viewBox', `0 0 ${_imgW} ${_imgH}`);
+    updateCrosshairScale();
   }
 
   function setZoom(z, pivotScreenX, pivotScreenY) {
@@ -112,7 +119,8 @@ const CanvasManager = (() => {
   }
 
   function renderAnnotations() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    ensureSvgLayers();
+    while (_annotationLayer.firstChild) _annotationLayer.removeChild(_annotationLayer.firstChild);
     for (let i = 0; i < _shapes.length; i++) {
       const shape = _shapes[i];
       if (shape.shape_type !== 'rectangle') continue;
@@ -153,7 +161,7 @@ const CanvasManager = (() => {
         }
       }
       g.setAttribute('data-idx', i);
-      svg.appendChild(g);
+      _annotationLayer.appendChild(g);
     }
 
     if (_drag && _drag.type === 'draw' && _drag.curImgX !== undefined) {
@@ -166,8 +174,69 @@ const CanvasManager = (() => {
       preview.setAttribute('stroke', '#3b82f6');
       preview.setAttribute('stroke-width', 2 / _zoom);
       preview.setAttribute('stroke-dasharray', `${6/_zoom} ${3/_zoom}`);
-      svg.appendChild(preview);
+      _annotationLayer.appendChild(preview);
     }
+  }
+
+  function initSvgLayers() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    _annotationLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    _annotationLayer.setAttribute('data-layer', 'annotations');
+
+    _crosshairLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    _crosshairLayer.setAttribute('data-layer', 'crosshair');
+    _crosshairLayer.setAttribute('hidden', '');
+
+    _crosshairH = document.createElementNS('http://www.w3.org/2000/svg','line');
+    _crosshairH.setAttribute('class', 'crosshair-h');
+    _crosshairV = document.createElementNS('http://www.w3.org/2000/svg','line');
+    _crosshairV.setAttribute('class', 'crosshair-v');
+
+    _crosshairLayer.appendChild(_crosshairH);
+    _crosshairLayer.appendChild(_crosshairV);
+    svg.appendChild(_annotationLayer);
+    svg.appendChild(_crosshairLayer);
+    updateCrosshairScale();
+  }
+
+  function ensureSvgLayers() {
+    if (!_annotationLayer || !_crosshairLayer || !_crosshairH || !_crosshairV) initSvgLayers();
+  }
+
+  function updateCrosshairScale() {
+    if (!svg) return;
+    svg.style.setProperty('--crosshair-stroke-width', `${1.25 / _zoom}`);
+    svg.style.setProperty('--crosshair-dasharray', `${5 / _zoom} ${4 / _zoom}`);
+  }
+
+  function updateCrosshair(clientX, clientY) {
+    ensureSvgLayers();
+    if (!_imgW || !_imgH) {
+      hideCrosshair();
+      return;
+    }
+
+    const { x, y } = screenToImage(clientX, clientY);
+    if (x < 0 || x > _imgW || y < 0 || y > _imgH) {
+      hideCrosshair();
+      return;
+    }
+
+    _crosshairH.setAttribute('x1', 0);
+    _crosshairH.setAttribute('y1', y);
+    _crosshairH.setAttribute('x2', _imgW);
+    _crosshairH.setAttribute('y2', y);
+    _crosshairV.setAttribute('x1', x);
+    _crosshairV.setAttribute('y1', 0);
+    _crosshairV.setAttribute('x2', x);
+    _crosshairV.setAttribute('y2', _imgH);
+    updateCrosshairScale();
+    _crosshairLayer.removeAttribute('hidden');
+  }
+
+  function hideCrosshair() {
+    if (_crosshairLayer) _crosshairLayer.setAttribute('hidden', '');
   }
 
   function getHandlePositions(r) {
@@ -235,7 +304,8 @@ const CanvasManager = (() => {
   }
 
   function onPointerMove(e) {
-    if (e.pointerType === 'touch') return;
+    if (e.pointerType === 'touch') { hideCrosshair(); return; }
+    updateCrosshair(e.clientX, e.clientY);
     if (!_drag) return;
     e.preventDefault();
     const { x: ix, y: iy } = screenToImage(e.clientX, e.clientY);
@@ -257,6 +327,16 @@ const CanvasManager = (() => {
     } else if (_drag.type === 'resize') {
       applyResize(_drag, ix, iy); renderAnnotations();
     }
+  }
+
+  function onPointerLeave(e) {
+    if (e.pointerType === 'touch') return;
+    hideCrosshair();
+  }
+
+  function onPointerCancel(e) {
+    hideCrosshair();
+    onPointerUp(e);
   }
 
   function onPointerUp(e) {
