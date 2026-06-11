@@ -345,13 +345,8 @@ const CanvasManager = (() => {
       }
       const hitIdx = hitTestShape(ix, iy);
       if (hitIdx >= 0) {
-        const selectionChanged = hitIdx !== _selectedIdx;
-        if (_justAdded && !selectionChanged) {
-          return;
-        }
-        if (selectionChanged) _justAdded = false;
+        if (hitIdx !== _selectedIdx) _justAdded = false;
         _selectedIdx = hitIdx;
-        _drag = { type: 'move', idx: _selectedIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[_selectedIdx].points)) };
         renderAnnotations();
         if (_onShapesChanged) _onShapesChanged('select', _selectedIdx);
         return;
@@ -409,30 +404,6 @@ const CanvasManager = (() => {
       y: nearestSnap(y, candidates.ys, threshold),
     };
   }
-  function snapRectMove(x1, y1, x2, y2, label, excludeIdx) {
-    const candidates = snapCandidates(label, excludeIdx);
-    const threshold = snapThreshold();
-    let dx = 0;
-    let dy = 0;
-    const xs = [x1, (x1 + x2) / 2, x2];
-    const ys = [y1, (y1 + y2) / 2, y2];
-    let bestX = threshold;
-    let bestY = threshold;
-    for (const x of xs) {
-      for (const cx of candidates.xs) {
-        const dist = Math.abs(x - cx);
-        if (dist <= bestX) { bestX = dist; dx = cx - x; }
-      }
-    }
-    for (const y of ys) {
-      for (const cy of candidates.ys) {
-        const dist = Math.abs(y - cy);
-        if (dist <= bestY) { bestY = dist; dy = cy - y; }
-      }
-    }
-    return { x1: x1 + dx, y1: y1 + dy, x2: x2 + dx, y2: y2 + dy };
-  }
-
   function onPointerMove(e) {
     if (e.pointerType === 'touch') { hideCrosshair(); return; }
     updateCrosshair(e.clientX, e.clientY);
@@ -447,17 +418,6 @@ const CanvasManager = (() => {
       const p = clampPoint(ix, iy);
       const snapped = applySnapPoint(p.x, p.y, _activeLabel);
       _drag.curImgX = snapped.x; _drag.curImgY = snapped.y;
-      renderAnnotations();
-    } else if (_drag.type === 'move') {
-      const dx = ix - _drag.startImgX, dy = iy - _drag.startImgY;
-      const op = _drag.origPts;
-      const bw = Math.abs(op[1][0] - op[0][0]), bh = Math.abs(op[1][1] - op[0][1]);
-      let nx1 = Math.max(0, Math.min(_imgW - bw, op[0][0] + dx));
-      let ny1 = Math.max(0, Math.min(_imgH - bh, op[0][1] + dy));
-      let moved = snapRectMove(nx1, ny1, nx1 + bw, ny1 + bh, _shapes[_drag.idx]?.label, _drag.idx);
-      nx1 = Math.max(0, Math.min(_imgW - bw, moved.x1));
-      ny1 = Math.max(0, Math.min(_imgH - bh, moved.y1));
-      _shapes[_drag.idx].points = [[nx1, ny1],[nx1 + bw, ny1 + bh]];
       renderAnnotations();
     } else if (_drag.type === 'resize') {
       applyResize(_drag, ix, iy); renderAnnotations();
@@ -484,7 +444,7 @@ const CanvasManager = (() => {
       if (Math.abs(ix - _drag.startImgX) > 0 && Math.abs(iy - _drag.startImgY) > 0) {
         if (_onShapesChanged) _onShapesChanged('addShape', { x1: _drag.startImgX, y1: _drag.startImgY, x2: ix, y2: iy });
       }
-    } else if (_drag.type === 'move' || _drag.type === 'resize') {
+    } else if (_drag.type === 'resize') {
       if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
     }
     _drag = null; renderAnnotations();
@@ -513,13 +473,8 @@ const CanvasManager = (() => {
           }
           const hitIdx = hitTestShape(ix, iy);
           if (hitIdx >= 0) {
-            const selectionChanged = hitIdx !== _selectedIdx;
-            if (_justAdded && !selectionChanged) {
-              return;
-            }
-            if (selectionChanged) _justAdded = false;
+            if (hitIdx !== _selectedIdx) _justAdded = false;
             _selectedIdx = hitIdx;
-            _drag = { type: 'move', idx: _selectedIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[_selectedIdx].points)) };
             renderAnnotations();
             if (_onShapesChanged) _onShapesChanged('select', _selectedIdx);
             return;
@@ -554,14 +509,6 @@ const CanvasManager = (() => {
           const p = clampPoint(ix, iy);
           const snapped = applySnapPoint(p.x, p.y, _activeLabel);
           _drag.curImgX = snapped.x; _drag.curImgY = snapped.y; renderAnnotations();
-        } else if (_drag.type === 'move') {
-          const dx = ix - _drag.startImgX, dy = iy - _drag.startImgY;
-          const op = _drag.origPts;
-          const bw = Math.abs(op[1][0] - op[0][0]), bh = Math.abs(op[1][1] - op[0][1]);
-          const nx1 = Math.max(0, Math.min(_imgW - bw, op[0][0] + dx));
-          const ny1 = Math.max(0, Math.min(_imgH - bh, op[0][1] + dy));
-          _shapes[_drag.idx].points = [[nx1, ny1],[nx1 + bw, ny1 + bh]];
-          renderAnnotations();
         } else if (_drag.type === 'resize') {
           applyResize(_drag, ix, iy); renderAnnotations();
         }
@@ -588,7 +535,7 @@ const CanvasManager = (() => {
           if (Math.abs(ex - _drag.startImgX) > 0 && Math.abs(ey - _drag.startImgY) > 0) {
             if (_onShapesChanged) _onShapesChanged('addShape', { x1: _drag.startImgX, y1: _drag.startImgY, x2: ex, y2: ey });
           }
-        } else if (_drag.type === 'move' || _drag.type === 'resize') {
+        } else if (_drag.type === 'resize') {
           if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
         }
         _drag = null; renderAnnotations(); return;
