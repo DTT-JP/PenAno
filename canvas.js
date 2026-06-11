@@ -12,7 +12,10 @@ const CanvasManager = (() => {
   let _selectedIdx = -1;
   let _labelColors = {};
   let _drag = null;
+  let _justAdded = false;
   let _onShapesChanged = null;
+  const HANDLE_RADIUS_SCREEN = 8;
+  const HANDLE_HIT_RADIUS_SCREEN = 12;
   let _annotationLayer = null;
   let _crosshairLayer = null;
   let _crosshairH = null;
@@ -39,6 +42,7 @@ const CanvasManager = (() => {
         canvas.width = _imgW; canvas.height = _imgH;
         canvas.getContext('2d').drawImage(img, 0, 0);
         _selectedIdx = -1;
+        _justAdded = false;
         fitToView();
         resolve();
       };
@@ -87,18 +91,26 @@ const CanvasManager = (() => {
   function resetZoom() { _zoom = 1.0; centerImage(); return _zoom; }
   function zoomIn()    { return setZoom(_zoom * 1.2); }
   function zoomOut()   { return setZoom(_zoom / 1.2); }
-  function setMode(m)  { _mode = m; area.dataset.mode = m; area.style.cursor = m === 'add' ? 'crosshair' : ''; }
+  function setMode(m)  {
+    if (m !== _mode) _justAdded = false;
+    _mode = m; area.dataset.mode = m; area.style.cursor = m === 'add' ? 'crosshair' : '';
+  }
   function getMode()   { return _mode; }
 
   function setShapes(shapes, labelColors) {
     _shapes = shapes || [];
     _labelColors = labelColors || {};
     _selectedIdx = -1;
+    _justAdded = false;
     renderAnnotations();
   }
   function setLabelColors(lc) { _labelColors = lc; renderAnnotations(); }
   function getSelectedIdx()   { return _selectedIdx; }
-  function setSelectedIdx(i)  { _selectedIdx = i; renderAnnotations(); }
+  function setSelectedIdx(i)  {
+    if (i < 0 || i !== _selectedIdx) _justAdded = false;
+    _selectedIdx = i; renderAnnotations();
+  }
+  function setJustAdded(flag) { _justAdded = !!flag; }
 
   function screenToImage(sx, sy) {
     const rect = area.getBoundingClientRect();
@@ -151,11 +163,14 @@ const CanvasManager = (() => {
         for (const [hName, hx, hy] of handles) {
           const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
           c.setAttribute('cx', hx); c.setAttribute('cy', hy);
-          c.setAttribute('r', 6 / _zoom);
+          c.setAttribute('r', HANDLE_RADIUS_SCREEN / _zoom);
           c.setAttribute('fill', '#fff');
           c.setAttribute('stroke', color);
           c.setAttribute('stroke-width', 1.5 / _zoom);
+          const cursor = getCursorForHandle(hName);
           c.setAttribute('data-handle', hName);
+          c.setAttribute('data-cursor', cursor);
+          c.setAttribute('cursor', cursor);
           c.setAttribute('data-idx', i);
           g.appendChild(c);
         }
@@ -254,12 +269,20 @@ const CanvasManager = (() => {
     if (!shape) return null;
     const r = rectFromPoints(shape.points);
     if (!r) return null;
-    const RADIUS = 10 / _zoom;
+    const RADIUS = HANDLE_HIT_RADIUS_SCREEN / _zoom;
     for (const [hName, hx, hy] of getHandlePositions(r)) {
       const dx = imgX - hx, dy = imgY - hy;
       if (Math.sqrt(dx*dx + dy*dy) <= RADIUS) return hName;
     }
     return null;
+  }
+
+  function getCursorForHandle(handle) {
+    if (handle === 'nw' || handle === 'se') return 'nwse-resize';
+    if (handle === 'ne' || handle === 'sw') return 'nesw-resize';
+    if (handle === 'n' || handle === 's') return 'ns-resize';
+    if (handle === 'w' || handle === 'e') return 'ew-resize';
+    return 'default';
   }
 
   function hitTestShape(imgX, imgY) {
@@ -288,6 +311,11 @@ const CanvasManager = (() => {
       }
       const hitIdx = hitTestShape(ix, iy);
       if (hitIdx >= 0) {
+        const selectionChanged = hitIdx !== _selectedIdx;
+        if (_justAdded && !selectionChanged) {
+          return;
+        }
+        if (selectionChanged) _justAdded = false;
         _selectedIdx = hitIdx;
         _drag = { type: 'move', idx: _selectedIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[_selectedIdx].points)) };
         renderAnnotations();
@@ -295,6 +323,7 @@ const CanvasManager = (() => {
         return;
       }
       _selectedIdx = -1;
+      _justAdded = false;
       _drag = { type: 'pan', startX: e.clientX, startY: e.clientY, origOX: _offsetX, origOY: _offsetY };
       renderAnnotations();
       if (_onShapesChanged) _onShapesChanged('select', -1);
@@ -377,6 +406,11 @@ const CanvasManager = (() => {
           }
           const hitIdx = hitTestShape(ix, iy);
           if (hitIdx >= 0) {
+            const selectionChanged = hitIdx !== _selectedIdx;
+            if (_justAdded && !selectionChanged) {
+              return;
+            }
+            if (selectionChanged) _justAdded = false;
             _selectedIdx = hitIdx;
             _drag = { type: 'move', idx: _selectedIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[_selectedIdx].points)) };
             renderAnnotations();
@@ -480,5 +514,5 @@ const CanvasManager = (() => {
   function onShapesChanged(cb) { _onShapesChanged = cb; }
   function getImageSize() { return { w: _imgW, h: _imgH }; }
 
-  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setSelectedIdx, getSelectedIdx, renderAnnotations, onShapesChanged, getImageSize };
+  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setSelectedIdx, getSelectedIdx, setJustAdded, renderAnnotations, onShapesChanged, getImageSize };
 })();
