@@ -2,7 +2,7 @@
 /**
  * sw.js – Service Worker (PWA オフライン対応)
  */
-const CACHE_NAME = 'penano-v0-0-0-dev(12)';
+const CACHE_NAME = 'penano-v0-0-0-dev(13)';
 
 // HTML（ルート）やドキュメント以外の、絶対に変わらない静的アセットのみを事前キャッシュ
 const ASSETS = [
@@ -11,7 +11,6 @@ const ASSETS = [
   './storage.js',
   './data.js',
   './canvas.js',
-  './settings.js',
   './app.js',
   './lib/jszip.min.js',
   './lib/marked.min.js',
