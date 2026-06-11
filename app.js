@@ -171,7 +171,7 @@
     els.fileInputFolder.addEventListener('change', onFolderSelected);
     els.fileInputZip.addEventListener('change', onZipSelected);
 
-    // Load screen version button
+    // Load screen version button — モーダルを開く前にelsが初期化済みであることを確認
     els.btnLoadVersionInfo.addEventListener('click', () => showVersionModal());
     els.loadVersionText.addEventListener('click', () => showVersionModal());
 
@@ -249,13 +249,15 @@
     els.modalVersion.addEventListener('click', e => {
       if (e.target === els.modalVersion) closeVersionModal();
     });
-  initSettings();
+    initSettings();
   }
 
   // ─── File Loading ──────────────────────────────────────────
   async function onFolderSelected(e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    // モーダルが開いている場合は閉じる（リリースノートを見た後にフォルダを開く場合）
+    closeVersionModal();
     showProgress();
     try {
       await DataManager.loadFromFileList(files, updateProgress);
@@ -271,6 +273,8 @@
   async function onZipSelected(e) {
     const file = e.target.files[0];
     if (!file) return;
+    // モーダルが開いている場合は閉じる（リリースノートを見た後にZIPを開く場合）
+    closeVersionModal();
     showProgress();
     try {
       await DataManager.loadFromZip(file, updateProgress);
@@ -618,9 +622,13 @@
     els.mdContent.innerHTML = '<p style="color:var(--text2);">読み込み中...</p>';
     els.mdOlderLink.style.display = 'none';
 
+    // ページのベースURLを基準にした絶対パスでfetchする
+    // （ロード画面・アプリ画面どちらから呼ばれても正しく解決される）
+    const docUrl = new URL(ver.docFile, document.baseURI).href + '?t=' + Date.now();
+
     try {
-      const res = await fetch(ver.docFile + '?t=' + Date.now());
-      if (!res.ok) throw new Error('fetch failed');
+      const res = await fetch(docUrl);
+      if (!res.ok) throw new Error('fetch failed: ' + res.status);
       const md = await res.text();
       // Use marked.js for rendering
       const html = marked.parse(md);
@@ -631,7 +639,7 @@
         a.rel = 'noopener';
       });
     } catch (e) {
-    const isOffline = !navigator.onLine;
+      const isOffline = !navigator.onLine;
       els.mdContent.innerHTML = `
         <h1>PenAno v${ver.version}</h1>
         <p style="color:var(--text2);">
