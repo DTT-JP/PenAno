@@ -35,8 +35,10 @@ const DataManager = (() => {
       try { jsonMap[stripExt(baseName(jf.name))] = JSON.parse(text); } catch(e) {}
     }
 
-    // セッション登録
-    _sessionId = Storage.registerSession('folder', folderName);
+    // セッション登録（ファイル数・総サイズでフィンガープリント）
+    const imgCount = images.length;
+    const totalSize = images.reduce((sum, f) => sum + f.size, 0);
+    _sessionId = Storage.registerSession('folder', folderName, imgCount, totalSize);
 
     // レガシーデータマイグレーション
     const imgNames = images.map(f => baseName(f.name));
@@ -73,8 +75,10 @@ const DataManager = (() => {
       try { jsonMap[stripExt(baseName(je.name))] = JSON.parse(text); } catch(e) {}
     }
 
-    // セッション登録
-    _sessionId = Storage.registerSession('zip', zipName);
+    // セッション登録（ファイル数・圧縮前総サイズでフィンガープリント）
+    const imgCount = imageEntries.length;
+    const totalSize = imageEntries.reduce((sum, ie) => sum + (ie._data?.uncompressedSize ?? ie.uncompressedSize ?? 0), 0);
+    _sessionId = Storage.registerSession('zip', zipName, imgCount, totalSize);
 
     // レガシーマイグレーション
     const imgNames = imageEntries.map(ie => baseName(ie.name));

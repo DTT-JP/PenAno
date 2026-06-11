@@ -43,12 +43,17 @@ const Storage = (() => {
 
   /**
    * 新しいセッションを登録してIDを返す。
-   * 同名が既にある場合は既存IDを返す（同一ファイル名の再ロード対応）。
+   * IDは  type:name:count<N>:size<S>  の形式。
+   * 同じフォルダ/ZIPを再度開いたとき、ファイル数・総サイズが一致すれば
+   * 同じIDが返り、保存済みデータを引き継げる。
+   *
    * @param {'folder'|'zip'} type
-   * @param {string} name  フォルダ名 or ZIPファイル名
+   * @param {string} name          フォルダ名 or ZIPファイル名
+   * @param {number} imgCount      画像ファイルの数
+   * @param {number} totalSize     画像ファイルの総バイトサイズ
    */
-  function registerSession(type, name) {
-    const id = type + ':' + name;
+  function registerSession(type, name, imgCount, totalSize) {
+    const id = type + ':' + name + ':count' + imgCount + ':size' + totalSize;
     const list = _getSessions();
     if (!list.find(s => s.id === id)) {
       list.push({ id, displayName: name, type, createdAt: Date.now() });
