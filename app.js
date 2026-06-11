@@ -312,7 +312,7 @@
     const vars = {
       '--ui-scale': clampNumber(s.uiScale, 0.8, 1.3, 1),
       '--crosshair-color': normalizeColor(s.crosshairColor, '#60a5fa'),
-      '--crosshair-width': clampNumber(s.crosshairWidth, 0.5, 5, 1.25),
+      '--crosshair-width': clampNumber(s.crosshairWidth, 0, 5, 1.25),
       '--annot-fill-opacity': clampNumber(s.annotFillOpacity, 0, 0.6, 0.2),
       '--annot-stroke-width': clampNumber(s.annotStrokeWidth, 0.5, 6, 1.5),
       '--handle-size': clampNumber(s.handleSize, 4, 18, 8),
@@ -362,7 +362,7 @@
     setText(els.displayUiScaleValue, `${els.displayUiScale.value}%`);
     els.displayShowAnnotations.checked = s.showAnnotations !== false;
     els.displayShowLabels.checked = !!s.showLabels;
-    setControlValue(els.displayCrosshairWidth, clampNumber(s.crosshairWidth, 0.5, 5, 1.25));
+    setControlValue(els.displayCrosshairWidth, clampNumber(s.crosshairWidth, 0, 5, 1.25));
     setText(els.displayCrosshairWidthValue, `${Number(els.displayCrosshairWidth.value).toFixed(2).replace(/\.00$/, '')}px`);
     setControlValue(els.displayCrosshairColor, normalizeColor(s.crosshairColor, '#60a5fa'));
     setControlValue(els.displayFillOpacity, Math.round(clampNumber(s.annotFillOpacity, 0, 0.6, 0.2) * 100));

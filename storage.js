@@ -58,11 +58,19 @@ const Storage = (() => {
   }
 
   /* ── アプリ全体の表示設定（セッション非依存） ───────────── */
+  function normalizeDisplaySettings(stored) {
+    const settings = { ...DEFAULT_DISPLAY_SETTINGS, ...(stored && typeof stored === 'object' ? stored : {}) };
+    const crosshairWidth = Number(settings.crosshairWidth);
+    // 0 は「十字カーソル非表示」として有効な保存値なので、falsy 判定で既定値に戻さない。
+    settings.crosshairWidth = Number.isFinite(crosshairWidth) ? crosshairWidth : DEFAULT_DISPLAY_SETTINGS.crosshairWidth;
+    return settings;
+  }
+
   function getDisplaySettings() {
     try {
       const v = localStorage.getItem(DISPLAY_SETTINGS_KEY);
       const stored = v ? JSON.parse(v) : {};
-      return { ...DEFAULT_DISPLAY_SETTINGS, ...(stored && typeof stored === 'object' ? stored : {}) };
+      return normalizeDisplaySettings(stored);
     } catch(e) {
       return { ...DEFAULT_DISPLAY_SETTINGS };
     }

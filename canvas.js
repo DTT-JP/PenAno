@@ -253,14 +253,20 @@ const CanvasManager = (() => {
   }
 
   function updateCrosshairScale() {
-    if (!svg) return;
+    if (!svg) return false;
     const crosshairWidth = cssNumber('--crosshair-width', 1.25);
+    if (crosshairWidth <= 0) {
+      hideCrosshair();
+      return false;
+    }
     svg.style.setProperty('--crosshair-stroke-width', `${crosshairWidth / _zoom}`);
     svg.style.setProperty('--crosshair-dasharray', `${5 / _zoom} ${4 / _zoom}`);
+    return true;
   }
 
   function updateCrosshair(clientX, clientY) {
     ensureSvgLayers();
+    if (!updateCrosshairScale()) return;
     if (!_imgW || !_imgH) {
       hideCrosshair();
       return;
@@ -280,7 +286,7 @@ const CanvasManager = (() => {
     _crosshairV.setAttribute('y1', 0);
     _crosshairV.setAttribute('x2', x);
     _crosshairV.setAttribute('y2', _imgH);
-    updateCrosshairScale();
+    if (!updateCrosshairScale()) return;
     _crosshairLayer.removeAttribute('hidden');
   }
 
