@@ -355,6 +355,9 @@ const CanvasManager = (() => {
         _selectedIdx = hitIdx;
         renderAnnotations();
         if (_onShapesChanged) _onShapesChanged('select', _selectedIdx);
+        if (_justAdded !== true) {
+          _drag = { type: 'move', idx: hitIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[hitIdx].points)) };
+        }
         return;
       }
       _selectedIdx = -1;
@@ -427,6 +430,8 @@ const CanvasManager = (() => {
       renderAnnotations();
     } else if (_drag.type === 'resize') {
       applyResize(_drag, ix, iy); renderAnnotations();
+    } else if (_drag.type === 'move') {
+      applyMove(_drag, ix, iy); renderAnnotations();
     }
   }
 
@@ -451,6 +456,8 @@ const CanvasManager = (() => {
         if (_onShapesChanged) _onShapesChanged('addShape', { x1: _drag.startImgX, y1: _drag.startImgY, x2: ix, y2: iy });
       }
     } else if (_drag.type === 'resize') {
+      if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
+    } else if (_drag.type === 'move') {
       if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
     }
     _drag = null; renderAnnotations();
@@ -483,6 +490,9 @@ const CanvasManager = (() => {
             _selectedIdx = hitIdx;
             renderAnnotations();
             if (_onShapesChanged) _onShapesChanged('select', _selectedIdx);
+            if (_justAdded !== true) {
+              _drag = { type: 'move', idx: hitIdx, startImgX: ix, startImgY: iy, origPts: JSON.parse(JSON.stringify(_shapes[hitIdx].points)) };
+            }
             return;
           }
         } else if (_mode === 'add') {
@@ -517,6 +527,8 @@ const CanvasManager = (() => {
           _drag.curImgX = snapped.x; _drag.curImgY = snapped.y; renderAnnotations();
         } else if (_drag.type === 'resize') {
           applyResize(_drag, ix, iy); renderAnnotations();
+        } else if (_drag.type === 'move') {
+          applyMove(_drag, ix, iy); renderAnnotations();
         }
         return;
       }
@@ -543,6 +555,8 @@ const CanvasManager = (() => {
           }
         } else if (_drag.type === 'resize') {
           if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
+        } else if (_drag.type === 'move') {
+          if (_onShapesChanged) _onShapesChanged('shapeUpdated', _drag.idx);
         }
         _drag = null; renderAnnotations(); return;
       }
@@ -554,6 +568,25 @@ const CanvasManager = (() => {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  function applyMove(drag, ix, iy) {
+    const shape = _shapes[drag.idx];
+    if (!shape) return;
+    const op = drag.origPts;
+    const r = rectFromPoints(op);
+    if (!r) return;
+    let dx = ix - drag.startImgX;
+    let dy = iy - drag.startImgY;
+    if (clipEnabled()) {
+      const topLeft = clampPoint(r.x1 + dx, r.y1 + dy);
+      const bottomRight = clampPoint(r.x2 + dx, r.y2 + dy);
+      dx = Math.min(topLeft.x - r.x1, bottomRight.x - r.x2);
+      dy = Math.min(topLeft.y - r.y1, bottomRight.y - r.y2);
+      dx = Math.max(-r.x1, Math.min(_imgW - r.x2, dx));
+      dy = Math.max(-r.y1, Math.min(_imgH - r.y2, dy));
+    }
+    shape.points = op.map(([x, y]) => [x + dx, y + dy]);
   }
 
   function applyResize(drag, ix, iy) {
