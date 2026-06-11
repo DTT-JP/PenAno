@@ -11,6 +11,21 @@
  */
 const Storage = (() => {
   const PREFIX = 'lme_';
+  const DISPLAY_SETTINGS_KEY = PREFIX + 'display_settings';
+  const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
+    theme: 'dark',
+    handedness: 'right',
+    uiScale: 1,
+    showAnnotations: true,
+    showLabels: false,
+    crosshairColor: '#60a5fa',
+    crosshairWidth: 1.25,
+    annotFillOpacity: 0.2,
+    annotStrokeWidth: 1.5,
+    handleSize: 8,
+    imgBrightness: 1,
+    imgContrast: 1,
+  });
 
   /* ── 低レベル helpers ──────────────────────────────────── */
   function _key(sessionId, key) {
@@ -27,6 +42,24 @@ const Storage = (() => {
   }
   function _del(sessionId, key) {
     try { localStorage.removeItem(_key(sessionId, key)); } catch(e) {}
+  }
+
+  /* ── アプリ全体の表示設定（セッション非依存） ───────────── */
+  function getDisplaySettings() {
+    try {
+      const v = localStorage.getItem(DISPLAY_SETTINGS_KEY);
+      const stored = v ? JSON.parse(v) : {};
+      return { ...DEFAULT_DISPLAY_SETTINGS, ...(stored && typeof stored === 'object' ? stored : {}) };
+    } catch(e) {
+      return { ...DEFAULT_DISPLAY_SETTINGS };
+    }
+  }
+
+  function setDisplaySetting(key, value) {
+    const settings = getDisplaySettings();
+    settings[key] = value;
+    try { localStorage.setItem(DISPLAY_SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+    return settings;
   }
 
   /* ── セッション管理 ────────────────────────────────────── */
@@ -161,6 +194,8 @@ const Storage = (() => {
   }
 
   return {
+    // app-wide display settings
+    getDisplaySettings, setDisplaySetting,
     // session
     registerSession, getSessions, deleteSession,
     // colors

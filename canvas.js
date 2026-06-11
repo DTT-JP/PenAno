@@ -14,7 +14,6 @@ const CanvasManager = (() => {
   let _drag = null;
   let _justAdded = false;
   let _onShapesChanged = null;
-  const HANDLE_RADIUS_SCREEN = 8;
   const HANDLE_HIT_RADIUS_SCREEN = 12;
   let _annotationLayer = null;
   let _crosshairLayer = null;
@@ -122,6 +121,13 @@ const CanvasManager = (() => {
     return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${alpha})`;
   }
   function getColor(label) { return _labelColors[label] || '#2563eb'; }
+  function rootStyle() { return getComputedStyle(document.documentElement); }
+  function cssNumber(name, fallback) {
+    const n = Number.parseFloat(rootStyle().getPropertyValue(name));
+    return Number.isFinite(n) ? n : fallback;
+  }
+  function showAnnotations() { return document.documentElement.dataset.showAnnotations !== 'false'; }
+  function showLabels() { return document.documentElement.dataset.showLabels === 'true'; }
 
   function rectFromPoints(pts) {
     if (!pts || pts.length < 2) return null;
@@ -132,7 +138,13 @@ const CanvasManager = (() => {
 
   function renderAnnotations() {
     ensureSvgLayers();
+    updateCrosshairScale();
     while (_annotationLayer.firstChild) _annotationLayer.removeChild(_annotationLayer.firstChild);
+    if (!showAnnotations()) return;
+    const fillOpacity = cssNumber('--annot-fill-opacity', 0.2);
+    const strokeWidth = cssNumber('--annot-stroke-width', 1.5);
+    const handleRadius = cssNumber('--handle-size', 8);
+    const shouldShowLabels = showLabels();
     for (let i = 0; i < _shapes.length; i++) {
       const shape = _shapes[i];
       if (shape.shape_type !== 'rectangle') continue;
@@ -145,7 +157,7 @@ const CanvasManager = (() => {
       const fill = document.createElementNS('http://www.w3.org/2000/svg','rect');
       fill.setAttribute('x', r.x1); fill.setAttribute('y', r.y1);
       fill.setAttribute('width', r.w); fill.setAttribute('height', r.h);
-      fill.setAttribute('fill', hexToRgba(color, 0.2));
+      fill.setAttribute('fill', hexToRgba(color, fillOpacity));
       fill.setAttribute('data-idx', i);
       g.appendChild(fill);
 
@@ -154,16 +166,30 @@ const CanvasManager = (() => {
       stroke.setAttribute('width', r.w); stroke.setAttribute('height', r.h);
       stroke.setAttribute('fill', 'none');
       stroke.setAttribute('stroke', color);
-      stroke.setAttribute('stroke-width', isSelected ? 2.5 / _zoom : 1.5 / _zoom);
+      stroke.setAttribute('stroke-width', (isSelected ? strokeWidth + 1 : strokeWidth) / _zoom);
       stroke.setAttribute('data-idx', i);
       g.appendChild(stroke);
+
+      if (shouldShowLabels) {
+        const labelText = document.createElementNS('http://www.w3.org/2000/svg','text');
+        labelText.setAttribute('x', r.x1);
+        labelText.setAttribute('y', Math.max(12 / _zoom, r.y1 - 4 / _zoom));
+        labelText.setAttribute('fill', color);
+        labelText.setAttribute('stroke', 'rgba(0,0,0,.65)');
+        labelText.setAttribute('stroke-width', 3 / _zoom);
+        labelText.setAttribute('paint-order', 'stroke');
+        labelText.setAttribute('font-size', 12 / _zoom);
+        labelText.setAttribute('font-weight', '700');
+        labelText.textContent = shape.label || '';
+        g.appendChild(labelText);
+      }
 
       if (isSelected) {
         const handles = getHandlePositions(r);
         for (const [hName, hx, hy] of handles) {
           const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
           c.setAttribute('cx', hx); c.setAttribute('cy', hy);
-          c.setAttribute('r', HANDLE_RADIUS_SCREEN / _zoom);
+          c.setAttribute('r', handleRadius / _zoom);
           c.setAttribute('fill', '#fff');
           c.setAttribute('stroke', color);
           c.setAttribute('stroke-width', 1.5 / _zoom);
@@ -221,7 +247,8 @@ const CanvasManager = (() => {
 
   function updateCrosshairScale() {
     if (!svg) return;
-    svg.style.setProperty('--crosshair-stroke-width', `${1.25 / _zoom}`);
+    const crosshairWidth = cssNumber('--crosshair-width', 1.25);
+    svg.style.setProperty('--crosshair-stroke-width', `${crosshairWidth / _zoom}`);
     svg.style.setProperty('--crosshair-dasharray', `${5 / _zoom} ${4 / _zoom}`);
   }
 
@@ -269,7 +296,7 @@ const CanvasManager = (() => {
     if (!shape) return null;
     const r = rectFromPoints(shape.points);
     if (!r) return null;
-    const RADIUS = HANDLE_HIT_RADIUS_SCREEN / _zoom;
+    const RADIUS = Math.max(HANDLE_HIT_RADIUS_SCREEN, cssNumber('--handle-size', 8) + 4) / _zoom;
     for (const [hName, hx, hy] of getHandlePositions(r)) {
       const dx = imgX - hx, dy = imgY - hy;
       if (Math.sqrt(dx*dx + dy*dy) <= RADIUS) return hName;
