@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * version.js – アプリバージョン定義
  * 新バージョンリリース時にここを更新し、doc/vX-X-X.md を追加する

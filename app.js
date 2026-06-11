@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * app.js – メインアプリケーションロジック
  */

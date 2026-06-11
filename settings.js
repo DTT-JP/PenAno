@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * settings.js – 設定パネルのナビゲーション・トグル管理
  * app.js の bindEvents() から initSettings(callbacks) を呼び出すこと

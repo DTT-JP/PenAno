@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->
 # PenAno
 
 iPad + Apple Pencil 対応のローカルアノテーションエディタです。  

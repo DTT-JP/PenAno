@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * data.js – ファイル読み込み・LabelMe JSON管理
  * セッションIDを保持し、Storage への全アクセスにそれを渡す。

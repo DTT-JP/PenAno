@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * storage.js – ローカル永続化（セッションスコープ付き）
  *

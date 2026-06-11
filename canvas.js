@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * canvas.js – 画像表示・アノテーション描画・ペン/タッチ操作
  */

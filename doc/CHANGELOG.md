@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->
 # CHANGELOG
 
 全バージョンの変更履歴です。最新バージョンのリリースノートはアプリ内「その他 → バージョン情報」から確認できます。
