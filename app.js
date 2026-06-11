@@ -125,6 +125,18 @@
       displayBrightnessValue: $('displayBrightnessValue'),
       displayContrast: $('displayContrast'),
       displayContrastValue: $('displayContrastValue'),
+      behaviorKeepZoom: $('behaviorKeepZoom'),
+      behaviorKeepPosition: $('behaviorKeepPosition'),
+      behaviorKeepLabel: $('behaviorKeepLabel'),
+      behaviorReturnToSelectAfterAdd: $('behaviorReturnToSelectAfterAdd'),
+      behaviorSnapSameLabel: $('behaviorSnapSameLabel'),
+      behaviorSnapOtherLabel: $('behaviorSnapOtherLabel'),
+      behaviorAutoClipToBounds: $('behaviorAutoClipToBounds'),
+      behaviorMinShapeSize: $('behaviorMinShapeSize'),
+      behaviorMinShapeSizeValue: $('behaviorMinShapeSizeValue'),
+      behaviorWarnOnClose: $('behaviorWarnOnClose'),
+      behaviorWarnZipSizeMb: $('behaviorWarnZipSizeMb'),
+      behaviorWarnZipSizeMbValue: $('behaviorWarnZipSizeMbValue'),
 
       modalVersion:    $('modalVersion'),
       modalVersionTitle: $('modalVersionTitle'),
@@ -137,6 +149,7 @@
     CanvasManager.init(els.mainCanvas, els.annotSvg, els.canvasWrapper, els.canvasArea);
     CanvasManager.onShapesChanged(handleShapesChanged);
     applyDisplaySettings(Storage.getDisplaySettings());
+    applyBehaviorSettings(Storage.getBehaviorSettings());
 
     if (typeof APP_VERSION !== 'undefined') {
       els.loadVersionText.textContent = 'v' + APP_VERSION.version;
@@ -274,6 +287,8 @@
 
     bindMenuModal();
     bindDisplaySettings();
+    bindBehaviorSettings();
+    bindDataDeletionButtons();
 
     els.btnCloseModal.addEventListener('click', closeVersionModal);
     els.modalVersion.addEventListener('click', e => { if (e.target === els.modalVersion) closeVersionModal(); });
@@ -384,6 +399,83 @@
     };
   }
 
+
+  // ─── Behavior Settings ──────────────────────────────────────
+  function applyBehaviorSettings(settings) {
+    const s = settings || Storage.getBehaviorSettings();
+    if (typeof CanvasManager !== 'undefined') {
+      CanvasManager.setBehaviorSettings(s);
+      CanvasManager.setActiveLabel(_activeLabel);
+    }
+    syncBehaviorSettingsUi(s);
+  }
+
+  function bindBehaviorSettings() {
+    syncBehaviorSettingsUi(Storage.getBehaviorSettings());
+    const bindings = [
+      [els.behaviorKeepZoom, 'keepZoom', el => el.checked],
+      [els.behaviorKeepPosition, 'keepPosition', el => el.checked],
+      [els.behaviorKeepLabel, 'keepLabel', el => el.checked],
+      [els.behaviorReturnToSelectAfterAdd, 'returnToSelectAfterAdd', el => el.checked],
+      [els.behaviorSnapSameLabel, 'snapSameLabel', el => el.checked],
+      [els.behaviorSnapOtherLabel, 'snapOtherLabel', el => el.checked],
+      [els.behaviorAutoClipToBounds, 'autoClipToBounds', el => el.checked],
+      [els.behaviorMinShapeSize, 'minShapeSize', el => Number(el.value)],
+      [els.behaviorWarnOnClose, 'warnOnClose', el => el.checked],
+      [els.behaviorWarnZipSizeMb, 'warnZipSizeMb', el => Number(el.value)],
+    ];
+    bindings.forEach(([el, key, read]) => {
+      if (!el) return;
+      const eventName = el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(eventName, () => {
+        const settings = Storage.setBehaviorSetting(key, read(el));
+        applyBehaviorSettings(settings);
+      });
+    });
+    window.addEventListener('beforeunload', e => {
+      if (!Storage.getBehaviorSettings().warnOnClose || DataManager.count() <= 0) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  }
+
+  function syncBehaviorSettingsUi(settings) {
+    if (!els || !els.behaviorKeepZoom) return;
+    const s = settings || Storage.getBehaviorSettings();
+    els.behaviorKeepZoom.checked = !!s.keepZoom;
+    els.behaviorKeepPosition.checked = !!s.keepPosition;
+    els.behaviorKeepLabel.checked = s.keepLabel !== false;
+    els.behaviorReturnToSelectAfterAdd.checked = !!s.returnToSelectAfterAdd;
+    els.behaviorSnapSameLabel.checked = !!s.snapSameLabel;
+    els.behaviorSnapOtherLabel.checked = !!s.snapOtherLabel;
+    els.behaviorAutoClipToBounds.checked = s.autoClipToBounds !== false;
+    setControlValue(els.behaviorMinShapeSize, clampNumber(s.minShapeSize, 1, 64, 4));
+    setText(els.behaviorMinShapeSizeValue, `${els.behaviorMinShapeSize.value}px`);
+    els.behaviorWarnOnClose.checked = !!s.warnOnClose;
+    setControlValue(els.behaviorWarnZipSizeMb, clampNumber(s.warnZipSizeMb, 0, 2048, 200));
+    setText(els.behaviorWarnZipSizeMbValue, `${els.behaviorWarnZipSizeMb.value}MB`);
+  }
+
+  function bindDataDeletionButtons() {
+    document.querySelectorAll('[data-delete-annotations-data]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg1 = 'アノテーション保存データ（セッション、JSON、確認フラグ、ラベルカラー）を削除します。表示・動作設定と Service Worker は残ります。続行しますか？';
+        const msg2 = '最終確認: アノテーション保存データを削除します。この操作は取り消せません。';
+        if (!confirm(msg1) || !confirm(msg2)) return;
+        try { Storage.clearAnnotationData(); alert('アノテーション保存データを削除しました。ページを再読み込みします。'); location.reload(); }
+        catch(e) { alert('削除に失敗しました。'); }
+      });
+    });
+    document.querySelectorAll('[data-delete-all-app-data]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg1 = 'PenAno の localStorage データをすべて削除します（表示・動作設定も削除）。Service Worker / PWA 登録とブラウザキャッシュは削除されません。続行しますか？';
+        const msg2 = '最終確認: PenAno の localStorage データをすべて削除します。この操作は取り消せません。';
+        if (!confirm(msg1) || !confirm(msg2)) return;
+        try { Storage.clearAllAppData(); alert('PenAno の localStorage データをすべて削除しました。ページを再読み込みします。'); location.reload(); }
+        catch(e) { alert('削除に失敗しました。'); }
+      });
+    });
+  }
 
   // ─── Menu Modal ───────────────────────────────────────────
   function bindMenuModal() {
@@ -746,6 +838,12 @@
     const file = e.target.files[0];
     if (!file) return;
     closeVersionModal();
+    const behavior = Storage.getBehaviorSettings();
+    const warnMb = clampNumber(behavior.warnZipSizeMb, 0, 2048, 200);
+    if (warnMb > 0 && file.size > warnMb * 1024 * 1024) {
+      const actualMb = (file.size / 1024 / 1024).toFixed(1);
+      if (!confirm(`ZIPファイルのサイズは ${actualMb}MB です。警告しきい値 ${warnMb}MB を超えています。読み込みを続行しますか？`)) { e.target.value = ''; return; }
+    }
     showProgress();
     try {
       await DataManager.loadFromZip(file, updateProgress);
@@ -799,6 +897,7 @@
         : '#2563eb';
     }
     _activeLabel = _labels.length > 0 ? _labels[0] : null;
+    if (typeof CanvasManager !== 'undefined') CanvasManager.setActiveLabel(_activeLabel);
   }
 
   function renderLabelList() {
@@ -848,6 +947,7 @@
 
   function onLabelItemClick(label) {
     _activeLabel = label;
+    CanvasManager.setActiveLabel(_activeLabel);
     const mode = CanvasManager.getMode();
     const selIdx = CanvasManager.getSelectedIdx();
     if (mode === 'select' && selIdx >= 0) {
@@ -876,6 +976,7 @@
     const sid = DataManager.getSessionId();
     if (sid) Storage.setLabelColor(sid, name, color);
     _activeLabel = name;
+    CanvasManager.setActiveLabel(_activeLabel);
     els.newLabelInput.value = '';
     els.addLabelForm.classList.add('hidden');
     renderLabelList();
@@ -898,6 +999,7 @@
     delete _labelColors[label];
     if (sid) Storage.removeLabelColor(sid, label);
     if (_activeLabel === label) _activeLabel = _labels.length > 0 ? _labels[0] : null;
+    CanvasManager.setActiveLabel(_activeLabel);
     renderLabelList();
     const file = DataManager.current();
     if (file) {
@@ -955,10 +1057,15 @@
     updateProgressStats();
     const sid = DataManager.getSessionId();
     updateConfirmButton(file.name, sid);
-    try { await CanvasManager.loadImage(file.imageURL); } catch(err) { console.error(err); }
+    const behavior = Storage.getBehaviorSettings();
+    try { await CanvasManager.loadImage(file.imageURL, { keepZoom: !!behavior.keepZoom, keepPosition: !!behavior.keepPosition }); } catch(err) { console.error(err); }
     const shapes = DataManager.getShapes(file);
     CanvasManager.setShapes(shapes, _labelColors);
     renderObjectList(shapes);
+    if (behavior.keepLabel === false) {
+      _activeLabel = _labels.length > 0 ? _labels[0] : null;
+      CanvasManager.setActiveLabel(_activeLabel);
+    }
     renderLabelList();
     updateZoomDisplay(CanvasManager.getZoom());
   }
@@ -1035,7 +1142,14 @@
           return;
         }
         const { w, h } = CanvasManager.getImageSize();
-        const shape = DataManager.makeRectShape(label, data.x1, data.y1, data.x2, data.y2, w, h);
+        const behavior = Storage.getBehaviorSettings();
+        const shape = DataManager.makeRectShape(label, data.x1, data.y1, data.x2, data.y2, w, h, { autoClipToBounds: behavior.autoClipToBounds !== false });
+        const rectWidth = Math.abs(shape.points[1][0] - shape.points[0][0]);
+        const rectHeight = Math.abs(shape.points[1][1] - shape.points[0][1]);
+        const minSize = clampNumber(behavior.minShapeSize, 1, 64, 4);
+        if (rectWidth < minSize || rectHeight < minSize) {
+          return;
+        }
         const sid = DataManager.getSessionId();
         if (!_labels.includes(label)) {
           _labels.push(label);
@@ -1048,6 +1162,7 @@
         CanvasManager.setShapes(shapes, _labelColors);
         CanvasManager.setSelectedIdx(shapes.length - 1);
         CanvasManager.setJustAdded(true);
+        if (behavior.returnToSelectAfterAdd) setMode('select');
         renderObjectList(shapes);
         break;
       }

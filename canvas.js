@@ -11,6 +11,8 @@ const CanvasManager = (() => {
   let _shapes = [];
   let _selectedIdx = -1;
   let _labelColors = {};
+  let _activeLabel = null;
+  let _behaviorSettings = {};
   let _drag = null;
   let _justAdded = false;
   let _onShapesChanged = null;
@@ -33,7 +35,7 @@ const CanvasManager = (() => {
     area.addEventListener('touchend',   onTouchEnd,   { passive: false });
   }
 
-  function loadImage(url) {
+  function loadImage(url, options = {}) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -42,7 +44,7 @@ const CanvasManager = (() => {
         canvas.getContext('2d').drawImage(img, 0, 0);
         _selectedIdx = -1;
         _justAdded = false;
-        fitToView();
+        fitToView(options);
         resolve();
       };
       img.onerror = reject;
@@ -50,10 +52,13 @@ const CanvasManager = (() => {
     });
   }
 
-  function fitToView() {
+  function fitToView(options = {}) {
     const aW = area.clientWidth, aH = area.clientHeight, P = 24;
-    _zoom = Math.min((aW - P*2) / _imgW, (aH - P*2) / _imgH, 1.0);
-    centerImage();
+    if (!options.keepZoom) {
+      _zoom = Math.min((aW - P*2) / _imgW, (aH - P*2) / _imgH, 1.0);
+    }
+    if (!options.keepPosition) centerImage();
+    else applyTransform();
   }
 
   function centerImage() {
@@ -104,6 +109,8 @@ const CanvasManager = (() => {
     renderAnnotations();
   }
   function setLabelColors(lc) { _labelColors = lc; renderAnnotations(); }
+  function setActiveLabel(label) { _activeLabel = label || null; }
+  function setBehaviorSettings(settings) { _behaviorSettings = { ...(settings || {}) }; }
   function getSelectedIdx()   { return _selectedIdx; }
   function setSelectedIdx(i)  {
     if (i < 0 || i !== _selectedIdx) _justAdded = false;
@@ -359,6 +366,73 @@ const CanvasManager = (() => {
     }
   }
 
+  function behaviorBool(key) { return _behaviorSettings && _behaviorSettings[key] === true; }
+  function clipEnabled() { return !_behaviorSettings || _behaviorSettings.autoClipToBounds !== false; }
+  function clampPoint(x, y) {
+    return clipEnabled() ? { x: clampImgX(x), y: clampImgY(y) } : { x, y };
+  }
+  function snapThreshold() { return 8 / Math.max(_zoom, 0.1); }
+  function snapCandidates(label, excludeIdx = -1) {
+    const candidates = { xs: [], ys: [] };
+    const useSame = behaviorBool('snapSameLabel');
+    const useOther = behaviorBool('snapOtherLabel');
+    if (!useSame && !useOther) return candidates;
+    for (let i = 0; i < _shapes.length; i++) {
+      if (i === excludeIdx) continue;
+      const shape = _shapes[i];
+      if (!shape || shape.shape_type !== 'rectangle') continue;
+      const sameLabel = shape.label === label;
+      if ((sameLabel && !useSame) || (!sameLabel && !useOther)) continue;
+      const r = rectFromPoints(shape.points);
+      if (!r) continue;
+      const mx = (r.x1 + r.x2) / 2;
+      const my = (r.y1 + r.y2) / 2;
+      candidates.xs.push(r.x1, mx, r.x2);
+      candidates.ys.push(r.y1, my, r.y2);
+    }
+    return candidates;
+  }
+  function nearestSnap(value, candidates, threshold) {
+    let best = value;
+    let bestDist = threshold;
+    for (const candidate of candidates) {
+      const dist = Math.abs(value - candidate);
+      if (dist <= bestDist) { best = candidate; bestDist = dist; }
+    }
+    return best;
+  }
+  function applySnapPoint(x, y, label, excludeIdx = -1) {
+    const candidates = snapCandidates(label, excludeIdx);
+    const threshold = snapThreshold();
+    return {
+      x: nearestSnap(x, candidates.xs, threshold),
+      y: nearestSnap(y, candidates.ys, threshold),
+    };
+  }
+  function snapRectMove(x1, y1, x2, y2, label, excludeIdx) {
+    const candidates = snapCandidates(label, excludeIdx);
+    const threshold = snapThreshold();
+    let dx = 0;
+    let dy = 0;
+    const xs = [x1, (x1 + x2) / 2, x2];
+    const ys = [y1, (y1 + y2) / 2, y2];
+    let bestX = threshold;
+    let bestY = threshold;
+    for (const x of xs) {
+      for (const cx of candidates.xs) {
+        const dist = Math.abs(x - cx);
+        if (dist <= bestX) { bestX = dist; dx = cx - x; }
+      }
+    }
+    for (const y of ys) {
+      for (const cy of candidates.ys) {
+        const dist = Math.abs(y - cy);
+        if (dist <= bestY) { bestY = dist; dy = cy - y; }
+      }
+    }
+    return { x1: x1 + dx, y1: y1 + dy, x2: x2 + dx, y2: y2 + dy };
+  }
+
   function onPointerMove(e) {
     if (e.pointerType === 'touch') { hideCrosshair(); return; }
     updateCrosshair(e.clientX, e.clientY);
@@ -370,14 +444,19 @@ const CanvasManager = (() => {
       _offsetY = _drag.origOY + (e.clientY - _drag.startY);
       applyTransform();
     } else if (_drag.type === 'draw') {
-      _drag.curImgX = clampImgX(ix); _drag.curImgY = clampImgY(iy);
+      const p = clampPoint(ix, iy);
+      const snapped = applySnapPoint(p.x, p.y, _activeLabel);
+      _drag.curImgX = snapped.x; _drag.curImgY = snapped.y;
       renderAnnotations();
     } else if (_drag.type === 'move') {
       const dx = ix - _drag.startImgX, dy = iy - _drag.startImgY;
       const op = _drag.origPts;
       const bw = Math.abs(op[1][0] - op[0][0]), bh = Math.abs(op[1][1] - op[0][1]);
-      const nx1 = Math.max(0, Math.min(_imgW - bw, op[0][0] + dx));
-      const ny1 = Math.max(0, Math.min(_imgH - bh, op[0][1] + dy));
+      let nx1 = Math.max(0, Math.min(_imgW - bw, op[0][0] + dx));
+      let ny1 = Math.max(0, Math.min(_imgH - bh, op[0][1] + dy));
+      let moved = snapRectMove(nx1, ny1, nx1 + bw, ny1 + bh, _shapes[_drag.idx]?.label, _drag.idx);
+      nx1 = Math.max(0, Math.min(_imgW - bw, moved.x1));
+      ny1 = Math.max(0, Math.min(_imgH - bh, moved.y1));
       _shapes[_drag.idx].points = [[nx1, ny1],[nx1 + bw, ny1 + bh]];
       renderAnnotations();
     } else if (_drag.type === 'resize') {
@@ -399,9 +478,10 @@ const CanvasManager = (() => {
     if (e.pointerType === 'touch') return;
     if (!_drag) return;
     if (_drag.type === 'draw') {
-      const ix = clampImgX(_drag.curImgX ?? _drag.startImgX);
-      const iy = clampImgY(_drag.curImgY ?? _drag.startImgY);
-      if (Math.abs(ix - _drag.startImgX) > 4 / _zoom && Math.abs(iy - _drag.startImgY) > 4 / _zoom) {
+      const endPoint = clampPoint(_drag.curImgX ?? _drag.startImgX, _drag.curImgY ?? _drag.startImgY);
+      const ix = endPoint.x;
+      const iy = endPoint.y;
+      if (Math.abs(ix - _drag.startImgX) > 0 && Math.abs(iy - _drag.startImgY) > 0) {
         if (_onShapesChanged) _onShapesChanged('addShape', { x1: _drag.startImgX, y1: _drag.startImgY, x2: ix, y2: iy });
       }
     } else if (_drag.type === 'move' || _drag.type === 'resize') {
@@ -471,7 +551,9 @@ const CanvasManager = (() => {
       const { x: ix, y: iy } = screenToImage(t.clientX, t.clientY);
       if (isPencil && _drag) {
         if (_drag.type === 'draw') {
-          _drag.curImgX = clampImgX(ix); _drag.curImgY = clampImgY(iy); renderAnnotations();
+          const p = clampPoint(ix, iy);
+          const snapped = applySnapPoint(p.x, p.y, _activeLabel);
+          _drag.curImgX = snapped.x; _drag.curImgY = snapped.y; renderAnnotations();
         } else if (_drag.type === 'move') {
           const dx = ix - _drag.startImgX, dy = iy - _drag.startImgY;
           const op = _drag.origPts;
@@ -501,8 +583,9 @@ const CanvasManager = (() => {
       if (t.touchType === 'stylus') {
         const { x: ix, y: iy } = screenToImage(t.clientX, t.clientY);
         if (_drag.type === 'draw') {
-          const ex = clampImgX(ix), ey = clampImgY(iy);
-          if (Math.abs(ex - _drag.startImgX) > 4 / _zoom && Math.abs(ey - _drag.startImgY) > 4 / _zoom) {
+          const endPoint = clampPoint(ix, iy);
+          const ex = endPoint.x, ey = endPoint.y;
+          if (Math.abs(ex - _drag.startImgX) > 0 && Math.abs(ey - _drag.startImgY) > 0) {
             if (_onShapesChanged) _onShapesChanged('addShape', { x1: _drag.startImgX, y1: _drag.startImgY, x2: ex, y2: ey });
           }
         } else if (_drag.type === 'move' || _drag.type === 'resize') {
@@ -525,7 +608,8 @@ const CanvasManager = (() => {
     let x1 = Math.min(op[0][0], op[1][0]), y1 = Math.min(op[0][1], op[1][1]);
     let x2 = Math.max(op[0][0], op[1][0]), y2 = Math.max(op[0][1], op[1][1]);
     const h = drag.handle;
-    const rix = clampImgX(ix), riy = clampImgY(iy);
+    const resizedPoint = applySnapPoint(clampImgX(ix), clampImgY(iy), _shapes[drag.idx]?.label, drag.idx);
+    const rix = resizedPoint.x, riy = resizedPoint.y;
     if (h.includes('n')) y1 = Math.min(riy, y2 - 2);
     if (h.includes('s')) y2 = Math.max(riy, y1 + 2);
     if (h.includes('w')) x1 = Math.min(rix, x2 - 2);
@@ -541,5 +625,5 @@ const CanvasManager = (() => {
   function onShapesChanged(cb) { _onShapesChanged = cb; }
   function getImageSize() { return { w: _imgW, h: _imgH }; }
 
-  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setSelectedIdx, getSelectedIdx, setJustAdded, renderAnnotations, onShapesChanged, getImageSize };
+  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setActiveLabel, setBehaviorSettings, setSelectedIdx, getSelectedIdx, setJustAdded, renderAnnotations, onShapesChanged, getImageSize };
 })();

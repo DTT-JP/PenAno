@@ -12,6 +12,7 @@
 const Storage = (() => {
   const PREFIX = 'lme_';
   const DISPLAY_SETTINGS_KEY = PREFIX + 'display_settings';
+  const BEHAVIOR_SETTINGS_KEY = PREFIX + 'behavior_settings';
   const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
     theme: 'dark',
     handedness: 'right',
@@ -25,6 +26,18 @@ const Storage = (() => {
     handleSize: 8,
     imgBrightness: 1,
     imgContrast: 1,
+  });
+  const DEFAULT_BEHAVIOR_SETTINGS = Object.freeze({
+    keepZoom: false,
+    keepPosition: false,
+    keepLabel: true,
+    returnToSelectAfterAdd: false,
+    snapSameLabel: false,
+    snapOtherLabel: false,
+    autoClipToBounds: true,
+    minShapeSize: 4,
+    warnOnClose: false,
+    warnZipSizeMb: 200,
   });
 
   /* ── 低レベル helpers ──────────────────────────────────── */
@@ -60,6 +73,44 @@ const Storage = (() => {
     settings[key] = value;
     try { localStorage.setItem(DISPLAY_SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
     return settings;
+  }
+
+  /* ── アプリ全体の動作設定（セッション非依存） ───────────── */
+  function getBehaviorSettings() {
+    try {
+      const v = localStorage.getItem(BEHAVIOR_SETTINGS_KEY);
+      const stored = v ? JSON.parse(v) : {};
+      return { ...DEFAULT_BEHAVIOR_SETTINGS, ...(stored && typeof stored === 'object' ? stored : {}) };
+    } catch(e) {
+      return { ...DEFAULT_BEHAVIOR_SETTINGS };
+    }
+  }
+
+  function setBehaviorSetting(key, value) {
+    const settings = getBehaviorSettings();
+    settings[key] = value;
+    try { localStorage.setItem(BEHAVIOR_SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+    return settings;
+  }
+
+  function clearAnnotationData() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(PREFIX)) continue;
+      if (k === DISPLAY_SETTINGS_KEY || k === BEHAVIOR_SETTINGS_KEY) continue;
+      keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+  }
+
+  function clearAllAppData() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(PREFIX)) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
   }
 
   /* ── セッション管理 ────────────────────────────────────── */
@@ -196,6 +247,8 @@ const Storage = (() => {
   return {
     // app-wide display settings
     getDisplaySettings, setDisplaySetting,
+    // app-wide behavior settings
+    getBehaviorSettings, setBehaviorSetting, clearAnnotationData, clearAllAppData,
     // session
     registerSession, getSessions, deleteSession,
     // colors
