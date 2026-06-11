@@ -199,7 +199,9 @@
     els.btnObjPanel.addEventListener('click', () => {
       openFlyout('objects');
     });
-    els.btnOtherMenu.addEventListener('click', () => openFlyout('other'));
+    els.btnOtherMenu.addEventListener('click', () => {
+      openFlyout('other');
+    });
 
     // Overlay close
     els.flyoutOverlay.addEventListener('click', () => closeFlyout());
@@ -247,6 +249,7 @@
     els.modalVersion.addEventListener('click', e => {
       if (e.target === els.modalVersion) closeVersionModal();
     });
+  initSettings();
   }
 
   // ─── File Loading ──────────────────────────────────────────
@@ -628,9 +631,14 @@
         a.rel = 'noopener';
       });
     } catch (e) {
+    const isOffline = !navigator.onLine;
       els.mdContent.innerHTML = `
         <h1>PenAno v${ver.version}</h1>
-        <p style="color:var(--text2);">リリースノートを読み込めませんでした。<br>${ver.docFile} を確認してください。</p>
+        <p style="color:var(--text2);">
+          ${isOffline
+            ? 'オフラインのため、リリースノートを取得できませんでした。'
+            : 'リリースノートを読み込めませんでした。'}
+        </p>
       `;
     }
 
