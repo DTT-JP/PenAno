@@ -287,11 +287,16 @@ const DataManager = (() => {
     return { zip, labels, classMap };
   }
 
-  function makeRectShape(label, x1, y1, x2, y2, imgW, imgH) {
-    const cx1 = Math.max(0, Math.min(imgW, Math.min(x1, x2)));
-    const cy1 = Math.max(0, Math.min(imgH, Math.min(y1, y2)));
-    const cx2 = Math.max(0, Math.min(imgW, Math.max(x1, x2)));
-    const cy2 = Math.max(0, Math.min(imgH, Math.max(y1, y2)));
+  function makeRectShape(label, x1, y1, x2, y2, imgW, imgH, options = {}) {
+    const clipToBounds = options.autoClipToBounds !== false;
+    const rx1 = Math.min(Number(x1), Number(x2));
+    const ry1 = Math.min(Number(y1), Number(y2));
+    const rx2 = Math.max(Number(x1), Number(x2));
+    const ry2 = Math.max(Number(y1), Number(y2));
+    const cx1 = clipToBounds ? Math.max(0, Math.min(imgW, rx1)) : rx1;
+    const cy1 = clipToBounds ? Math.max(0, Math.min(imgH, ry1)) : ry1;
+    const cx2 = clipToBounds ? Math.max(0, Math.min(imgW, rx2)) : rx2;
+    const cy2 = clipToBounds ? Math.max(0, Math.min(imgH, ry2)) : ry2;
     return { label, points: [[cx1, cy1],[cx2, cy2]], group_id: null, shape_type: 'rectangle', flags: {} };
   }
 

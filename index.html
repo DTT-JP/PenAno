@@ -385,15 +385,15 @@
           <p class="settings-desc">現在のセッションを終了し、別のデータセットを読み込みます。未保存の変更はlocalStorageに保持されます。</p>
           <div style="height:10px;"></div>
           <p class="pane-title">セッション終了</p>
-          <button class="settings-action-btn danger" id="btnClearSession">
+          <button class="settings-action-btn danger" id="btnDeleteAnnotationsDataSettings" data-delete-annotations-data>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3,6 5,6 21,6"/>
               <path d="M19 6l-1 14H6L5 6"/>
               <path d="M10 11v6M14 11v6"/>
             </svg>
-            すべての保存データを消去
+            アノテーション保存データを削除
           </button>
-          <p class="settings-desc">localStorageに保存されたすべてのアノテーション・確認フラグ・ラベルカラーを削除します。</p>
+          <p class="settings-desc">セッション、アノテーション、確認フラグ、ラベルカラーを削除します。表示・動作設定と Service Worker は残します。</p>
         </div>
 
         <!-- 表示 -->
@@ -673,7 +673,58 @@
           </section>
           <section class="menu-section" id="menuSec-behavior" data-menu-panel="behavior">
             <h2>behavior</h2>
-            <p>Phase 04: セクション骨格</p>
+            <div class="menu-group behavior-settings-group">
+              <h3>画像切替</h3>
+              <label class="menu-field toggle-switch">
+                <span>画像切替時にズームを維持</span>
+                <input type="checkbox" id="behaviorKeepZoom">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>画像切替時に位置を維持</span>
+                <input type="checkbox" id="behaviorKeepPosition">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>画像切替時に選択ラベルを維持</span>
+                <input type="checkbox" id="behaviorKeepLabel" checked>
+              </label>
+            </div>
+
+            <div class="menu-group behavior-settings-group">
+              <h3>矩形追加</h3>
+              <label class="menu-field toggle-switch">
+                <span>追加後に選択モードへ戻る</span>
+                <input type="checkbox" id="behaviorReturnToSelectAfterAdd">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>同じラベルの辺・角へスナップ</span>
+                <input type="checkbox" id="behaviorSnapSameLabel">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>他ラベルの辺・角へスナップ</span>
+                <input type="checkbox" id="behaviorSnapOtherLabel">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>画像外にはみ出した矩形を画像内に補正</span>
+                <input type="checkbox" id="behaviorAutoClipToBounds" checked>
+              </label>
+              <label class="menu-field menu-slider">
+                <span>最小矩形サイズ <strong id="behaviorMinShapeSizeValue">4px</strong></span>
+                <input type="range" id="behaviorMinShapeSize" min="1" max="64" step="1" value="4">
+              </label>
+            </div>
+
+            <div class="menu-group behavior-settings-group">
+              <h3>警告</h3>
+              <label class="menu-field toggle-switch">
+                <span>ページを閉じるときに警告</span>
+                <input type="checkbox" id="behaviorWarnOnClose">
+              </label>
+              <label class="menu-field menu-slider">
+                <span>ZIP サイズ警告 <strong id="behaviorWarnZipSizeMbValue">200MB</strong></span>
+                <input type="range" id="behaviorWarnZipSizeMb" min="0" max="2048" step="10" value="200">
+              </label>
+              <p>0MB にすると ZIP サイズ警告を表示しません。</p>
+            </div>
           </section>
           <section class="menu-section" id="menuSec-accessibility" data-menu-panel="accessibility">
             <h2>accessibility</h2>
@@ -685,7 +736,12 @@
           </section>
           <section class="menu-section" id="menuSec-app" data-menu-panel="app">
             <h2>app</h2>
-            <p>Phase 04: セクション骨格</p>
+            <div class="menu-group">
+              <h3>データ削除</h3>
+              <p>アノテーション保存データのみ削除するか、PenAno の localStorage 設定も含めて削除するかを選べます。どちらも Service Worker / PWA 登録は削除しません。</p>
+              <button class="menu-action-btn danger" id="btnDeleteAnnotationsData" data-delete-annotations-data>アノテーション保存データを削除（設定・Service Worker は残す）</button>
+              <button class="menu-action-btn danger" id="btnDeleteAllAppData" data-delete-all-app-data>すべての localStorage データを削除（設定も削除・Service Worker は残す）</button>
+            </div>
           </section>
         </div>
       </div>
