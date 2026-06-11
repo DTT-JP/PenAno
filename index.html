@@ -238,12 +238,13 @@
             </div>
             <span class="brand-name">PenAno</span>
           </div>
-          <button class="act-btn expand-btn" id="btnOtherMenu" title="その他">
+          <button class="act-btn expand-btn menu-open-btn" id="btnMenuOpen" title="メニュー" aria-label="メニュー">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
               <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
               <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
             </svg>
+            <span>メニュー</span>
           </button>
         </div>
       </div>
@@ -544,6 +545,62 @@
       </div><!-- /settings-detail -->
     </div><!-- /settings-panel -->
   </div><!-- /flyoutOther -->
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       Menu Modal
+  ════════════════════════════════════════════════════════ -->
+  <div id="modalMenu" class="modal-overlay menu-modal" aria-hidden="true">
+    <div class="modal-card menu-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalMenuTitle">
+      <div class="modal-header">
+        <span class="modal-title" id="modalMenuTitle">メニュー</span>
+        <button class="modal-close" id="btnCloseMenu" title="閉じる" aria-label="閉じる">×</button>
+      </div>
+
+      <div class="menu-modal-body">
+        <nav class="menu-sidebar" aria-label="メニューカテゴリ">
+          <button class="menu-nav-btn active" data-menu-section="data">data</button>
+          <button class="menu-nav-btn" data-menu-section="session">session</button>
+          <button class="menu-nav-btn" data-menu-section="display">display</button>
+          <button class="menu-nav-btn" data-menu-section="behavior">behavior</button>
+          <button class="menu-nav-btn" data-menu-section="accessibility">accessibility</button>
+          <button class="menu-nav-btn" data-menu-section="pen">pen</button>
+          <button class="menu-nav-btn" data-menu-section="app">app</button>
+        </nav>
+
+        <div class="menu-content">
+          <section class="menu-section active" id="menuSec-data" data-menu-panel="data">
+            <h2>data</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-session" data-menu-panel="session">
+            <h2>session</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-display" data-menu-panel="display">
+            <h2>display</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-behavior" data-menu-panel="behavior">
+            <h2>behavior</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-accessibility" data-menu-panel="accessibility">
+            <h2>accessibility</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-pen" data-menu-panel="pen">
+            <h2>pen</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+          <section class="menu-section" id="menuSec-app" data-menu-panel="app">
+            <h2>app</h2>
+            <p>Phase 04: セクション骨格</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════════════════════════════════════════
        Version Modal

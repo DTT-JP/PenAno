@@ -57,7 +57,7 @@
       btnConfirmAddLabel: $('btnConfirmAddLabel'),
       btnCancelAddLabel:  $('btnCancelAddLabel'),
 
-      btnOtherMenu:    $('btnOtherMenu'),
+      btnMenuOpen:     $('btnMenuOpen'),
 
       canvasArea:      $('canvasArea'),
       canvasWrapper:   $('canvasWrapper'),
@@ -66,7 +66,6 @@
 
       flyoutOverlay:   $('flyoutOverlay'),
       flyoutObjects:   $('flyoutObjects'),
-      flyoutOther:     $('flyoutOther'),
 
       btnZoomOut:      $('btnZoomOut'),
       btnZoomIn:       $('btnZoomIn'),
@@ -85,6 +84,9 @@
       btnDownloadZip:  $('btnDownloadZip'),
       btnReload:       $('btnReload'),
       btnVersionInfo:  $('btnVersionInfo'),
+
+      modalMenu:       $('modalMenu'),
+      btnCloseMenu:    $('btnCloseMenu'),
 
       modalVersion:    $('modalVersion'),
       modalVersionTitle: $('modalVersionTitle'),
@@ -113,14 +115,13 @@
   }
 
   // ─── Flyout System ─────────────────────────────────────────
-  const FLYOUTS = { objects: {}, other: {} };
+  const FLYOUTS = { objects: {} };
   const SIDEBAR_DRAWERS = { zoom: {}, progress: {} };
   let _activeFlyout = null;
   let _activeSidebarDrawer = null;
 
   function initFlyouts() {
     FLYOUTS.objects  = { panel: els.flyoutObjects,  btn: els.btnObjPanel };
-    FLYOUTS.other    = { panel: els.flyoutOther,    btn: els.btnOtherMenu };
     SIDEBAR_DRAWERS.zoom = { panel: els.zoomDrawer, btn: els.btnZoomPanel };
     SIDEBAR_DRAWERS.progress = { panel: els.progressDrawer, btn: els.btnProgress };
   }
@@ -191,7 +192,7 @@
     els.btnZoomPanel.addEventListener('click', () => toggleSidebarDrawer('zoom'));
     els.btnProgress.addEventListener('click', () => { updateProgressStats(); toggleSidebarDrawer('progress'); });
     els.btnObjPanel.addEventListener('click', () => openFlyout('objects'));
-    els.btnOtherMenu.addEventListener('click', () => { openFlyout('other'); });
+    els.btnMenuOpen.addEventListener('click', () => openMenuModal());
 
     els.flyoutOverlay.addEventListener('click', () => closeFlyout());
     document.querySelectorAll('[data-close-flyout]').forEach(btn => {
@@ -225,10 +226,58 @@
     els.btnReload.addEventListener('click', () => { closeFlyout(); showLoadScreen(); });
     els.btnVersionInfo.addEventListener('click', () => { closeFlyout(); showVersionModal(); });
 
+    bindMenuModal();
+
     els.btnCloseModal.addEventListener('click', closeVersionModal);
     els.modalVersion.addEventListener('click', e => { if (e.target === els.modalVersion) closeVersionModal(); });
 
     try { initSettings(getAppCallbacks()); } catch(e) { console.error('initSettings:', e); }
+  }
+
+
+  // ─── Menu Modal ───────────────────────────────────────────
+  function bindMenuModal() {
+    els.btnCloseMenu.addEventListener('click', closeMenuModal);
+    els.modalMenu.addEventListener('click', e => {
+      if (e.target === els.modalMenu) closeMenuModal();
+    });
+    els.modalMenu.querySelectorAll('.menu-nav-btn[data-menu-section]').forEach(btn => {
+      btn.addEventListener('click', () => switchMenuSection(btn.dataset.menuSection));
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && els.modalMenu.classList.contains('open')) {
+        closeMenuModal();
+      }
+    });
+  }
+
+  function openMenuModal(section = 'data') {
+    closeFlyout();
+    closeSidebarDrawer();
+    closeVersionModal();
+    switchMenuSection(section);
+    els.modalMenu.classList.add('open');
+    els.modalMenu.setAttribute('aria-hidden', 'false');
+    els.btnMenuOpen.classList.add('open');
+  }
+
+  function closeMenuModal() {
+    els.modalMenu.classList.remove('open');
+    els.modalMenu.setAttribute('aria-hidden', 'true');
+    els.btnMenuOpen.classList.remove('open');
+  }
+
+  function switchMenuSection(name) {
+    const targetName = name || 'data';
+    const targetPanel = els.modalMenu.querySelector(`[data-menu-panel="${targetName}"]`);
+    if (!targetPanel) return;
+
+    els.modalMenu.querySelectorAll('.menu-nav-btn[data-menu-section]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.menuSection === targetName);
+    });
+    els.modalMenu.querySelectorAll('.menu-section[data-menu-panel]').forEach(section => {
+      section.classList.toggle('active', section === targetPanel);
+    });
   }
 
   function bindSidebarDrawerSwipe() {
