@@ -136,6 +136,15 @@
       behaviorWarnOnClose: $('behaviorWarnOnClose'),
       behaviorWarnZipSizeMb: $('behaviorWarnZipSizeMb'),
       behaviorWarnZipSizeMbValue: $('behaviorWarnZipSizeMbValue'),
+      penDrawWithPen: $('penDrawWithPen'),
+      penDrawWithTouch: $('penDrawWithTouch'),
+      penDrawWithMouse: $('penDrawWithMouse'),
+      penFingerPanPreferred: $('penFingerPanPreferred'),
+      penPinchZoom: $('penPinchZoom'),
+      penEraserDeletes: $('penEraserDeletes'),
+      penPalmRejection: $('penPalmRejection'),
+      penSuppressBrowserGestures: $('penSuppressBrowserGestures'),
+      inputDiagnostics: $('inputDiagnostics'),
 
       modalVersion:    $('modalVersion'),
       modalVersionTitle: $('modalVersionTitle'),
@@ -149,6 +158,7 @@
     CanvasManager.onShapesChanged(handleShapesChanged);
     applyDisplaySettings(Storage.getDisplaySettings());
     applyBehaviorSettings(Storage.getBehaviorSettings());
+    applyPenSettings(Storage.getPenSettings());
 
     if (typeof APP_VERSION !== 'undefined') {
       els.loadVersionText.textContent = 'v' + APP_VERSION.version;
@@ -290,6 +300,8 @@
     bindMenuModal();
     bindDisplaySettings();
     bindBehaviorSettings();
+    bindPenSettings();
+    initInputDiagnostics(els.inputDiagnostics);
     bindDataDeletionButtons();
 
     els.btnCloseModal.addEventListener('click', closeVersionModal);
@@ -454,6 +466,109 @@
     els.behaviorWarnOnClose.checked = !!s.warnOnClose;
     setControlValue(els.behaviorWarnZipSizeMb, clampNumber(s.warnZipSizeMb, 0, 2048, 200));
     setText(els.behaviorWarnZipSizeMbValue, `${els.behaviorWarnZipSizeMb.value}MB`);
+  }
+
+  // ─── Pen/Input Settings ───────────────────────────────────
+  function applyPenSettings(settings) {
+    const s = settings || Storage.getPenSettings();
+    if (typeof CanvasManager !== 'undefined' && CanvasManager.setPenSettings) {
+      CanvasManager.setPenSettings(s);
+    }
+    syncPenSettingsUi(s);
+  }
+
+  function bindPenSettings() {
+    syncPenSettingsUi(Storage.getPenSettings());
+    const bindings = [
+      [els.penDrawWithPen, 'drawWithPen', el => el.checked],
+      [els.penDrawWithTouch, 'drawWithTouch', el => el.checked],
+      [els.penDrawWithMouse, 'drawWithMouse', el => el.checked],
+      [els.penFingerPanPreferred, 'fingerPanPreferred', el => el.checked],
+      [els.penPinchZoom, 'pinchZoom', el => el.checked],
+      [els.penEraserDeletes, 'eraserDeletes', el => el.checked],
+      [els.penPalmRejection, 'palmRejection', el => el.checked],
+      [els.penSuppressBrowserGestures, 'suppressBrowserGestures', el => el.checked],
+    ];
+    bindings.forEach(([el, key, read]) => {
+      if (!el) return;
+      el.addEventListener('change', () => {
+        const settings = Storage.setPenSetting(key, read(el));
+        applyPenSettings(settings);
+      });
+    });
+  }
+
+  function syncPenSettingsUi(settings) {
+    if (!els || !els.penDrawWithPen) return;
+    const s = settings || Storage.getPenSettings();
+    els.penDrawWithPen.checked = s.drawWithPen !== false;
+    els.penDrawWithTouch.checked = !!s.drawWithTouch;
+    els.penDrawWithMouse.checked = s.drawWithMouse !== false;
+    els.penFingerPanPreferred.checked = s.fingerPanPreferred !== false;
+    els.penPinchZoom.checked = s.pinchZoom !== false;
+    els.penEraserDeletes.checked = s.eraserDeletes !== false;
+    els.penPalmRejection.checked = s.palmRejection !== false;
+    els.penSuppressBrowserGestures.checked = s.suppressBrowserGestures !== false;
+  }
+
+  function initInputDiagnostics(containerEl) {
+    if (!containerEl) return;
+    const rows = {
+      pointerType: 'pointerType',
+      pressure: 'pressure',
+      tiltX: 'tiltX',
+      tiltY: 'tiltY',
+      twist: 'twist',
+      buttons: 'buttons',
+      hover: 'hover',
+      touch: 'touch対応',
+    };
+    containerEl.innerHTML = Object.entries(rows).map(([key, label]) => (
+      `<div class="input-diagnostics-row"><span>${label}</span><strong data-diagnostic="${key}">—</strong></div>`
+    )).join('');
+
+    const setValue = (key, value) => {
+      const el = containerEl.querySelector(`[data-diagnostic="${key}"]`);
+      if (el) el.textContent = value;
+    };
+    const fmt = value => (value === undefined || value === null || value === '') ? '—' : String(value);
+    const fmtNumber = value => Number.isFinite(Number(value)) ? Number(value).toFixed(3).replace(/0+$/, '').replace(/\.$/, '') : '—';
+    const updateStatic = () => {
+      const hasTouch = 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+      setValue('touch', hasTouch ? `あり (${navigator.maxTouchPoints || 0})` : 'なし');
+      setValue('hover', window.matchMedia && window.matchMedia('(hover: hover)').matches ? '対応' : '未検出');
+    };
+    const updatePointer = e => {
+      setValue('pointerType', fmt(e.pointerType));
+      setValue('pressure', fmtNumber(e.pressure));
+      setValue('tiltX', fmt(e.tiltX));
+      setValue('tiltY', fmt(e.tiltY));
+      setValue('twist', fmt(e.twist));
+      setValue('buttons', fmt(e.buttons));
+      const hovering = e.pointerType !== 'touch' && e.buttons === 0;
+      setValue('hover', hovering ? 'hover中' : '接触/操作中');
+    };
+    const updateTouch = e => {
+      const t = e.touches && e.touches[0] || e.changedTouches && e.changedTouches[0];
+      setValue('pointerType', t && t.touchType === 'stylus' ? 'pen(touch)' : 'touch');
+      setValue('pressure', fmtNumber(t && t.force));
+      setValue('tiltX', '—');
+      setValue('tiltY', '—');
+      setValue('twist', '—');
+      setValue('buttons', '—');
+      setValue('hover', '接触/操作中');
+    };
+
+    updateStatic();
+    const target = els.canvasArea || document;
+    target.addEventListener('pointerdown', updatePointer, { passive: true });
+    target.addEventListener('pointermove', updatePointer, { passive: true });
+    target.addEventListener('pointerup', updatePointer, { passive: true });
+    target.addEventListener('pointercancel', updatePointer, { passive: true });
+    target.addEventListener('touchstart', updateTouch, { passive: true });
+    target.addEventListener('touchmove', updateTouch, { passive: true });
+    target.addEventListener('touchend', updateTouch, { passive: true });
+    window.addEventListener('resize', updateStatic);
   }
 
   function bindDataDeletionButtons() {
@@ -1154,6 +1269,18 @@
       case 'shapeUpdated': {
         const shapes = DataManager.getShapes(file);
         if (data >= 0 && data < shapes.length) DataManager.updateShape(file, data, shapes[data]);
+        break;
+      }
+      case 'deleteShape': {
+        const idx = Number(data);
+        const shapes = DataManager.getShapes(file);
+        if (Number.isInteger(idx) && idx >= 0 && idx < shapes.length) {
+          DataManager.removeShape(file, idx);
+          const updatedShapes = DataManager.getShapes(file);
+          CanvasManager.setShapes(updatedShapes, _labelColors);
+          CanvasManager.setSelectedIdx(-1);
+          renderObjectList(updatedShapes);
+        }
         break;
       }
       case 'zoom': {
