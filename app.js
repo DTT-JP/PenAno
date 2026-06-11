@@ -104,6 +104,26 @@
 
       modalMenu:       $('modalMenu'),
       btnCloseMenu:    $('btnCloseMenu'),
+      btnOpenDisplayMenu: $('btnOpenDisplayMenu'),
+      displayTheme:    $('displayTheme'),
+      displayHandedness: $('displayHandedness'),
+      displayUiScale: $('displayUiScale'),
+      displayUiScaleValue: $('displayUiScaleValue'),
+      displayShowAnnotations: $('displayShowAnnotations'),
+      displayShowLabels: $('displayShowLabels'),
+      displayCrosshairWidth: $('displayCrosshairWidth'),
+      displayCrosshairWidthValue: $('displayCrosshairWidthValue'),
+      displayCrosshairColor: $('displayCrosshairColor'),
+      displayFillOpacity: $('displayFillOpacity'),
+      displayFillOpacityValue: $('displayFillOpacityValue'),
+      displayStrokeWidth: $('displayStrokeWidth'),
+      displayStrokeWidthValue: $('displayStrokeWidthValue'),
+      displayHandleSize: $('displayHandleSize'),
+      displayHandleSizeValue: $('displayHandleSizeValue'),
+      displayBrightness: $('displayBrightness'),
+      displayBrightnessValue: $('displayBrightnessValue'),
+      displayContrast: $('displayContrast'),
+      displayContrastValue: $('displayContrastValue'),
 
       modalVersion:    $('modalVersion'),
       modalVersionTitle: $('modalVersionTitle'),
@@ -115,6 +135,7 @@
 
     CanvasManager.init(els.mainCanvas, els.annotSvg, els.canvasWrapper, els.canvasArea);
     CanvasManager.onShapesChanged(handleShapesChanged);
+    applyDisplaySettings(Storage.getDisplaySettings());
 
     if (typeof APP_VERSION !== 'undefined') {
       els.loadVersionText.textContent = 'v' + APP_VERSION.version;
@@ -248,8 +269,10 @@
     bindSplitSliders();
     els.btnReload.addEventListener('click', () => { closeFlyout(); showLoadScreen(); });
     els.btnVersionInfo.addEventListener('click', () => { closeFlyout(); showVersionModal(); });
+    if (els.btnOpenDisplayMenu) els.btnOpenDisplayMenu.addEventListener('click', () => openMenuModal('display'));
 
     bindMenuModal();
+    bindDisplaySettings();
 
     els.btnCloseModal.addEventListener('click', closeVersionModal);
     els.modalVersion.addEventListener('click', e => { if (e.target === els.modalVersion) closeVersionModal(); });
@@ -260,6 +283,104 @@
     });
 
     try { initSettings(getAppCallbacks()); } catch(e) { console.error('initSettings:', e); }
+  }
+
+
+  // ─── Display Settings ───────────────────────────────────────
+  function applyDisplaySettings(settings) {
+    const s = settings || Storage.getDisplaySettings();
+    const root = document.documentElement;
+    root.dataset.theme = normalizeChoice(s.theme, ['light', 'dark', 'black'], 'dark');
+    root.dataset.handedness = normalizeChoice(s.handedness, ['right', 'left'], 'right');
+
+    const vars = {
+      '--ui-scale': clampNumber(s.uiScale, 0.8, 1.3, 1),
+      '--crosshair-color': normalizeColor(s.crosshairColor, '#60a5fa'),
+      '--crosshair-width': clampNumber(s.crosshairWidth, 0.5, 5, 1.25),
+      '--annot-fill-opacity': clampNumber(s.annotFillOpacity, 0, 0.6, 0.2),
+      '--annot-stroke-width': clampNumber(s.annotStrokeWidth, 0.5, 6, 1.5),
+      '--handle-size': clampNumber(s.handleSize, 4, 18, 8),
+      '--img-brightness': clampNumber(s.imgBrightness, 0.5, 1.5, 1),
+      '--img-contrast': clampNumber(s.imgContrast, 0.5, 1.5, 1),
+    };
+    Object.entries(vars).forEach(([name, value]) => root.style.setProperty(name, String(value)));
+    root.dataset.showAnnotations = s.showAnnotations === false ? 'false' : 'true';
+    root.dataset.showLabels = s.showLabels ? 'true' : 'false';
+
+    syncDisplaySettingsUi({ ...s, ...cssVarsToSettings(vars) });
+    if (typeof CanvasManager !== 'undefined') CanvasManager.renderAnnotations();
+  }
+
+  function bindDisplaySettings() {
+    syncDisplaySettingsUi(Storage.getDisplaySettings());
+    const bindings = [
+      [els.displayTheme, 'theme', el => el.value],
+      [els.displayHandedness, 'handedness', el => el.value],
+      [els.displayUiScale, 'uiScale', el => Number(el.value) / 100],
+      [els.displayShowAnnotations, 'showAnnotations', el => el.checked],
+      [els.displayShowLabels, 'showLabels', el => el.checked],
+      [els.displayCrosshairWidth, 'crosshairWidth', el => Number(el.value)],
+      [els.displayCrosshairColor, 'crosshairColor', el => el.value],
+      [els.displayFillOpacity, 'annotFillOpacity', el => Number(el.value) / 100],
+      [els.displayStrokeWidth, 'annotStrokeWidth', el => Number(el.value)],
+      [els.displayHandleSize, 'handleSize', el => Number(el.value)],
+      [els.displayBrightness, 'imgBrightness', el => Number(el.value) / 100],
+      [els.displayContrast, 'imgContrast', el => Number(el.value) / 100],
+    ];
+    bindings.forEach(([el, key, read]) => {
+      if (!el) return;
+      const eventName = el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(eventName, () => {
+        const settings = Storage.setDisplaySetting(key, read(el));
+        applyDisplaySettings(settings);
+      });
+    });
+  }
+
+  function syncDisplaySettingsUi(settings) {
+    if (!els || !els.displayTheme) return;
+    const s = settings || Storage.getDisplaySettings();
+    els.displayTheme.value = normalizeChoice(s.theme, ['light', 'dark', 'black'], 'dark');
+    els.displayHandedness.value = normalizeChoice(s.handedness, ['right', 'left'], 'right');
+    setControlValue(els.displayUiScale, Math.round(clampNumber(s.uiScale, 0.8, 1.3, 1) * 100));
+    setText(els.displayUiScaleValue, `${els.displayUiScale.value}%`);
+    els.displayShowAnnotations.checked = s.showAnnotations !== false;
+    els.displayShowLabels.checked = !!s.showLabels;
+    setControlValue(els.displayCrosshairWidth, clampNumber(s.crosshairWidth, 0.5, 5, 1.25));
+    setText(els.displayCrosshairWidthValue, `${Number(els.displayCrosshairWidth.value).toFixed(2).replace(/\.00$/, '')}px`);
+    setControlValue(els.displayCrosshairColor, normalizeColor(s.crosshairColor, '#60a5fa'));
+    setControlValue(els.displayFillOpacity, Math.round(clampNumber(s.annotFillOpacity, 0, 0.6, 0.2) * 100));
+    setText(els.displayFillOpacityValue, `${els.displayFillOpacity.value}%`);
+    setControlValue(els.displayStrokeWidth, clampNumber(s.annotStrokeWidth, 0.5, 6, 1.5));
+    setText(els.displayStrokeWidthValue, `${Number(els.displayStrokeWidth.value).toFixed(2).replace(/\.00$/, '')}px`);
+    setControlValue(els.displayHandleSize, clampNumber(s.handleSize, 4, 18, 8));
+    setText(els.displayHandleSizeValue, `${els.displayHandleSize.value}px`);
+    setControlValue(els.displayBrightness, Math.round(clampNumber(s.imgBrightness, 0.5, 1.5, 1) * 100));
+    setText(els.displayBrightnessValue, `${els.displayBrightness.value}%`);
+    setControlValue(els.displayContrast, Math.round(clampNumber(s.imgContrast, 0.5, 1.5, 1) * 100));
+    setText(els.displayContrastValue, `${els.displayContrast.value}%`);
+  }
+
+  function setControlValue(el, value) { if (el) el.value = value; }
+  function setText(el, value) { if (el) el.textContent = value; }
+  function normalizeChoice(value, allowed, fallback) { return allowed.includes(value) ? value : fallback; }
+  function normalizeColor(value, fallback) { return /^#[0-9a-f]{6}$/i.test(value || '') ? value : fallback; }
+  function clampNumber(value, min, max, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  }
+  function cssVarsToSettings(vars) {
+    return {
+      uiScale: vars['--ui-scale'],
+      crosshairColor: vars['--crosshair-color'],
+      crosshairWidth: vars['--crosshair-width'],
+      annotFillOpacity: vars['--annot-fill-opacity'],
+      annotStrokeWidth: vars['--annot-stroke-width'],
+      handleSize: vars['--handle-size'],
+      imgBrightness: vars['--img-brightness'],
+      imgContrast: vars['--img-contrast'],
+    };
   }
 
 
