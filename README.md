@@ -100,7 +100,7 @@ Safari ブラウザ内で LabelMe (JSON) 形式のラベリングデータの **
 
 ### 4. 保存する
 
-**設定 → 保存 → ZIPで書き出す** からアノテーションJSONをまとめてダウンロードできます。
+**メニュー → データ → ZIP でダウンロード** からアノテーションJSONをまとめてダウンロードできます。
 
 ---
 
@@ -115,7 +115,6 @@ PenAno/
 ├── canvas.js           # 画像描画・アノテーション・ポインタ/タッチ操作
 ├── data.js             # ファイル読み込み・LabelMe JSON管理
 ├── storage.js          # ローカル永続化（localStorage）
-├── settings.js         # 設定パネルのナビゲーション・トグル管理
 ├── manifest.json       # PWAマニフェスト
 ├── sw.js               # Service Worker（オフライン対応）
 ├── icons/

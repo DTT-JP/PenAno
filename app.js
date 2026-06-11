@@ -104,7 +104,6 @@
 
       modalMenu:       $('modalMenu'),
       btnCloseMenu:    $('btnCloseMenu'),
-      btnOpenDisplayMenu: $('btnOpenDisplayMenu'),
       sessionList:     $('sessionList'),
       displayTheme:    $('displayTheme'),
       displayHandedness: $('displayHandedness'),
@@ -153,6 +152,10 @@
 
     if (typeof APP_VERSION !== 'undefined') {
       els.loadVersionText.textContent = 'v' + APP_VERSION.version;
+      const menuVersionVal = $('menuVersionVal');
+      const menuDateVal = $('menuDateVal');
+      if (menuVersionVal) menuVersionVal.textContent = APP_VERSION.version;
+      if (menuDateVal) menuDateVal.textContent = APP_VERSION.date;
     }
 
     bindEvents();
@@ -281,9 +284,8 @@
     els.btnOpenClassId.addEventListener('click', openClassIdModal);
     els.btnExportAiDataset.addEventListener('click', () => { closeMenuModal(); onExportAiDataset(); });
     bindSplitSliders();
-    els.btnReload.addEventListener('click', () => { closeFlyout(); showLoadScreen(); });
-    els.btnVersionInfo.addEventListener('click', () => { closeFlyout(); showVersionModal(); });
-    if (els.btnOpenDisplayMenu) els.btnOpenDisplayMenu.addEventListener('click', () => openMenuModal('display'));
+    els.btnReload.addEventListener('click', () => { closeMenuModal(); showLoadScreen(); });
+    els.btnVersionInfo.addEventListener('click', () => { closeMenuModal(); showVersionModal(); });
 
     bindMenuModal();
     bindDisplaySettings();
@@ -297,8 +299,6 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && els.modalClassId.classList.contains('open')) closeClassIdModal();
     });
-
-    try { initSettings(getAppCallbacks()); } catch(e) { console.error('initSettings:', e); }
   }
 
 
@@ -800,21 +800,6 @@
       row.addEventListener('touchend', () => { tracking = false; }, { passive: true });
       row.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
     });
-  }
-
-  /** settings.js に渡すコールバック群 */
-  function getAppCallbacks() {
-    return {
-      getCurrentSessionId: () => DataManager.getSessionId(),
-      getLabelColors: () => _labelColors,
-      reloadLabelColors: () => {
-        const sid = DataManager.getSessionId();
-        if (!sid) return;
-        _labelColors = Storage.getLabelColors(sid);
-        CanvasManager.setLabelColors(_labelColors);
-        renderLabelList();
-      },
-    };
   }
 
   // ─── File Loading ──────────────────────────────────────────
