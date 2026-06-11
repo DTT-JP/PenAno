@@ -105,6 +105,7 @@
       modalMenu:       $('modalMenu'),
       btnCloseMenu:    $('btnCloseMenu'),
       btnOpenDisplayMenu: $('btnOpenDisplayMenu'),
+      sessionList:     $('sessionList'),
       displayTheme:    $('displayTheme'),
       displayHandedness: $('displayHandedness'),
       displayUiScale: $('displayUiScale'),
@@ -393,6 +394,9 @@
     els.modalMenu.querySelectorAll('.menu-nav-btn[data-menu-section]').forEach(btn => {
       btn.addEventListener('click', () => switchMenuSection(btn.dataset.menuSection));
     });
+    if (els.sessionList) {
+      els.sessionList.addEventListener('click', onSessionListClick);
+    }
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && els.modalMenu.classList.contains('open')) {
         closeMenuModal();
@@ -406,6 +410,7 @@
     closeSidebarDrawer();
     closeVersionModal();
     switchMenuSection(section);
+    renderSessionList();
     els.modalMenu.classList.add('open');
     els.modalMenu.setAttribute('aria-hidden', 'false');
     els.btnMenuOpen.classList.add('open');
@@ -428,6 +433,160 @@
     els.modalMenu.querySelectorAll('.menu-section[data-menu-panel]').forEach(section => {
       section.classList.toggle('active', section === targetPanel);
     });
+  }
+
+  function renderSessionList() {
+    if (!els.sessionList) return;
+    const sessions = Storage.getSessions().slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const currentSessionId = DataManager.getSessionId();
+    els.sessionList.innerHTML = '';
+    if (!sessions.length) {
+      const empty = document.createElement('p');
+      empty.className = 'session-empty';
+      empty.textContent = '保存済みセッションはありません。';
+      els.sessionList.appendChild(empty);
+      return;
+    }
+
+    sessions.forEach(session => {
+      const isCurrent = session.id === currentSessionId;
+      const card = document.createElement('article');
+      card.className = 'session-card' + (isCurrent ? ' session-card--current' : '');
+      card.dataset.sessionId = session.id;
+
+      const header = document.createElement('div');
+      header.className = 'session-card-header';
+
+      const typeIcon = document.createElement('span');
+      typeIcon.className = 'session-type-icon';
+      typeIcon.setAttribute('aria-hidden', 'true');
+      typeIcon.textContent = session.type === 'zip' ? '🗜️' : '📁';
+
+      const name = document.createElement('span');
+      name.className = 'session-name';
+      name.title = session.displayName || session.id;
+      name.textContent = session.displayName || session.id;
+
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'session-badge';
+      typeBadge.textContent = session.type === 'zip' ? 'zip' : 'folder';
+
+      header.appendChild(typeIcon);
+      header.appendChild(name);
+      header.appendChild(typeBadge);
+      if (isCurrent) {
+        const currentBadge = document.createElement('span');
+        currentBadge.className = 'session-badge session-badge--current';
+        currentBadge.textContent = '現在';
+        header.appendChild(currentBadge);
+      }
+
+      const date = document.createElement('div');
+      date.className = 'session-date';
+      date.textContent = '作成日時: ' + formatSessionDate(session.createdAt);
+
+      const actions = document.createElement('div');
+      actions.className = 'session-actions';
+      actions.appendChild(createSessionActionButton('export-labels', 'ラベル書き出し'));
+      actions.appendChild(createSessionActionButton('copy-labels', 'ラベルを現在へコピー'));
+      actions.appendChild(createSessionActionButton('delete-session', '削除', true));
+
+      card.appendChild(header);
+      card.appendChild(date);
+      card.appendChild(actions);
+      els.sessionList.appendChild(card);
+    });
+  }
+
+  function createSessionActionButton(action, label, danger = false) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'session-action-btn' + (danger ? ' session-action-btn--danger' : '');
+    btn.dataset.sessionAction = action;
+    btn.textContent = label;
+    return btn;
+  }
+
+  function onSessionListClick(e) {
+    const btn = e.target.closest('[data-session-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-session-id]');
+    if (!card) return;
+    const sessionId = card.dataset.sessionId;
+    const action = btn.dataset.sessionAction;
+    if (action === 'export-labels') exportSessionLabelColors(sessionId);
+    if (action === 'copy-labels') copySessionLabelsToCurrent(sessionId);
+    if (action === 'delete-session') deleteSessionFromList(sessionId);
+  }
+
+  function exportSessionLabelColors(sessionId) {
+    const session = Storage.getSessions().find(s => s.id === sessionId);
+    const colors = Storage.getLabelColors(sessionId);
+    if (!Object.keys(colors).length) {
+      alert('書き出すラベルカラーがありません。');
+      return;
+    }
+    const payload = {
+      sessionId,
+      displayName: session ? session.displayName : sessionId,
+      type: session ? session.type : null,
+      exportedAt: new Date().toISOString(),
+      label_colors: colors,
+    };
+    const filename = sanitizeFilename((session && session.displayName) || sessionId) + '_label_colors.json';
+    downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }), filename);
+  }
+
+  function copySessionLabelsToCurrent(sourceSessionId) {
+    const currentSessionId = DataManager.getSessionId();
+    if (!currentSessionId) {
+      alert('現在のセッションがありません。フォルダまたは ZIP を読み込んでください。');
+      return;
+    }
+    if (sourceSessionId === currentSessionId) {
+      alert('コピー元は現在のセッションです。');
+      return;
+    }
+    const sourceColors = Storage.getLabelColors(sourceSessionId);
+    if (!Object.keys(sourceColors).length) {
+      alert('コピーするラベルカラーがありません。');
+      return;
+    }
+    Storage.mergeLabelColors(currentSessionId, sourceColors);
+    const previousActive = _activeLabel;
+    initLabels();
+    if (previousActive && _labels.includes(previousActive)) _activeLabel = previousActive;
+    CanvasManager.setLabelColors(_labelColors);
+    renderLabelList();
+    const file = DataManager.current();
+    if (file) {
+      const shapes = DataManager.getShapes(file);
+      CanvasManager.setShapes(shapes, _labelColors);
+      renderObjectList(shapes);
+    }
+    alert('ラベルカラーを現在のセッションへコピーしました。既存のラベルカラーは維持されます。');
+  }
+
+  function deleteSessionFromList(sessionId) {
+    const currentSessionId = DataManager.getSessionId();
+    const isCurrent = sessionId === currentSessionId;
+    const message = isCurrent
+      ? '現在開いているセッションを削除します。localStorage 上の保存データが削除されますが、画面上の読み込み済みデータは再読み込みまで残ります。続行しますか？'
+      : 'このセッションを削除しますか？localStorage 上の対象データも削除されます。';
+    if (!confirm(message)) return;
+    Storage.deleteSession(sessionId);
+    renderSessionList();
+  }
+
+  function formatSessionDate(value) {
+    const date = new Date(value || 0);
+    if (Number.isNaN(date.getTime()) || !value) return '不明';
+    return date.toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function sanitizeFilename(value) {
+    const safe = String(value || 'session').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_');
+    return safe.slice(0, 80) || 'session';
   }
 
   function bindSplitSliders() {
@@ -621,6 +780,7 @@
     els.loadScreen.classList.add('hidden');
     els.app.classList.remove('hidden');
     setMode('select');
+    renderSessionList();
     showCurrentImage();
   }
 

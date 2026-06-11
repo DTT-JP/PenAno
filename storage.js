@@ -90,7 +90,7 @@ const Storage = (() => {
     const id = type + ':' + name + ':count' + imgCount + ':size' + totalSize;
     const list = _getSessions();
     if (!list.find(s => s.id === id)) {
-      list.push({ id, displayName: name, type, createdAt: Date.now() });
+      list.push({ id, displayName: name, type, imgCount, totalSize, createdAt: Date.now() });
       _saveSessions(list);
     }
     return id;
