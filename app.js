@@ -1,22 +1,22 @@
 /**
  * app.js – メインアプリケーションロジック
- * DataManager, CanvasManager, Storage を統合し、UIを制御する
  */
 (function () {
   'use strict';
 
   // ─── State ─────────────────────────────────────────────────
-  let _labels = [];         // 全ラベル名の配列
-  let _labelColors = {};    // { label: '#rrggbb' }
+  let _labels = [];
+  let _labelColors = {};
+  let _activeLabel = null;   // 現在選択中のラベル（追加・変更用）
 
   // ─── DOM Refs ──────────────────────────────────────────────
   const $ = id => document.getElementById(id);
-
-  let els; // populated on DOMContentLoaded
+  let els;
 
   // ─── Init ──────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     els = {
+      // Load screen
       loadScreen:      $('loadScreen'),
       btnLoadFolder:   $('btnLoadFolder'),
       btnLoadZip:      $('btnLoadZip'),
@@ -25,66 +25,155 @@
       loadProgress:    $('loadProgress'),
       progressFill:    $('progressFill'),
       progressText:    $('progressText'),
+      loadVersionText: $('loadVersionText'),
+      btnLoadVersionInfo: $('btnLoadVersionInfo'),
 
+      // App
       app:             $('app'),
-      sidebar:         $('sidebar'),
 
-      btnFullscreen:   $('btnFullscreen'),
+      // Sidebar
       btnPrev:         $('btnPrev'),
       btnNext:         $('btnNext'),
       fileName:        $('fileName'),
       fileCounter:     $('fileCounter'),
-      statTotal:       $('statTotal'),
-      statDone:        $('statDone'),
-      statLeft:        $('statLeft'),
+
       btnConfirm:      $('btnConfirm'),
       confirmLabel:    $('confirmLabel'),
-
-      btnZoomOut:      $('btnZoomOut'),
-      btnZoomIn:       $('btnZoomIn'),
-      zoomInput:       $('zoomInput'),
-      btnZoomReset:    $('btnZoomReset'),
-      btnZoomCenter:   $('btnZoomCenter'),
-
       btnModeSelect:   $('btnModeSelect'),
       btnModeAdd:      $('btnModeAdd'),
-      addLabelPicker:  $('addLabelPicker'),
-      selectAddLabel:  $('selectAddLabel'),
+      btnProgress:     $('btnProgress'),
 
-      btnAddLabel:     $('btnAddLabel'),
+      btnZoomReset:    $('btnZoomReset'),
+      btnZoomCenter:   $('btnZoomCenter'),
+      btnZoomPanel:    $('btnZoomPanel'),
+
       labelList:       $('labelList'),
+      btnObjPanel:     $('btnObjPanel'),
+      btnAddLabel:     $('btnAddLabel'),
       addLabelForm:    $('addLabelForm'),
       newLabelInput:   $('newLabelInput'),
       newLabelColor:   $('newLabelColor'),
       btnConfirmAddLabel: $('btnConfirmAddLabel'),
       btnCancelAddLabel:  $('btnCancelAddLabel'),
 
-      objCount:        $('objCount'),
-      objectList:      $('objectList'),
+      btnOtherMenu:    $('btnOtherMenu'),
 
-      btnDownloadZip:  $('btnDownloadZip'),
-      btnReload:       $('btnReload'),
-
+      // Canvas
       canvasArea:      $('canvasArea'),
       canvasWrapper:   $('canvasWrapper'),
       mainCanvas:      $('mainCanvas'),
       annotSvg:        $('annotSvg'),
+
+      // Flyouts
+      flyoutOverlay:   $('flyoutOverlay'),
+      flyoutZoom:      $('flyoutZoom'),
+      flyoutProgress:  $('flyoutProgress'),
+      flyoutObjects:   $('flyoutObjects'),
+      flyoutOther:     $('flyoutOther'),
+
+      // Zoom panel
+      btnZoomOut:      $('btnZoomOut'),
+      btnZoomIn:       $('btnZoomIn'),
+      zoomInput:       $('zoomInput'),
+      btnZoomReset2:   $('btnZoomReset2'),
+      btnZoomCenter2:  $('btnZoomCenter2'),
+
+      // Progress panel
+      statTotal:       $('statTotal'),
+      statDone:        $('statDone'),
+      statLeft:        $('statLeft'),
+
+      // Objects panel
+      objCount:        $('objCount'),
+      objectList:      $('objectList'),
+
+      // Other menu
+      btnDownloadZip:  $('btnDownloadZip'),
+      btnReload:       $('btnReload'),
+      btnVersionInfo:  $('btnVersionInfo'),
+
+      // Modal
+      modalVersion:    $('modalVersion'),
+      modalVersionTitle: $('modalVersionTitle'),
+      mdContent:       $('mdContent'),
+      mdOlderLink:     $('mdOlderLink'),
+      mdOlderLinkAnchor: $('mdOlderLinkAnchor'),
+      btnCloseModal:   $('btnCloseModal'),
     };
 
-    // Init canvas manager
+    // Init canvas
     CanvasManager.init(els.mainCanvas, els.annotSvg, els.canvasWrapper, els.canvasArea);
     CanvasManager.onShapesChanged(handleShapesChanged);
 
+    // Display version on load screen
+    if (typeof APP_VERSION !== 'undefined') {
+      els.loadVersionText.textContent = 'v' + APP_VERSION.version;
+    }
+
     bindEvents();
+    registerServiceWorker();
   });
+
+  // ─── PWA ───────────────────────────────────────────────────
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  // ─── Flyout System ─────────────────────────────────────────
+  const FLYOUTS = {
+    zoom:     { panel: null, btn: null },
+    progress: { panel: null, btn: null },
+    objects:  { panel: null, btn: null },
+    other:    { panel: null, btn: null },
+  };
+
+  let _activeFlyout = null;
+
+  function initFlyouts() {
+    FLYOUTS.zoom     = { panel: els.flyoutZoom,     btn: els.btnZoomPanel };
+    FLYOUTS.progress = { panel: els.flyoutProgress, btn: els.btnProgress };
+    FLYOUTS.objects  = { panel: els.flyoutObjects,  btn: els.btnObjPanel };
+    FLYOUTS.other    = { panel: els.flyoutOther,    btn: els.btnOtherMenu };
+  }
+
+  function openFlyout(name) {
+    if (_activeFlyout === name) {
+      closeFlyout();
+      return;
+    }
+    closeFlyout(false);
+    _activeFlyout = name;
+    const f = FLYOUTS[name];
+    f.panel.classList.add('open');
+    f.btn.classList.add('open');
+    els.flyoutOverlay.classList.add('open');
+  }
+
+  function closeFlyout(resetOverlay = true) {
+    if (_activeFlyout) {
+      const f = FLYOUTS[_activeFlyout];
+      f.panel.classList.remove('open');
+      f.btn.classList.remove('open');
+      _activeFlyout = null;
+    }
+    if (resetOverlay) els.flyoutOverlay.classList.remove('open');
+  }
 
   // ─── Event Binding ─────────────────────────────────────────
   function bindEvents() {
-    // Load buttons
+    initFlyouts();
+
+    // Load
     els.btnLoadFolder.addEventListener('click', () => els.fileInputFolder.click());
     els.btnLoadZip.addEventListener('click', () => els.fileInputZip.click());
     els.fileInputFolder.addEventListener('change', onFolderSelected);
     els.fileInputZip.addEventListener('change', onZipSelected);
+
+    // Load screen version button
+    els.btnLoadVersionInfo.addEventListener('click', () => showVersionModal());
+    els.loadVersionText.addEventListener('click', () => showVersionModal());
 
     // Navigation
     els.btnPrev.addEventListener('click', () => { if (DataManager.prev()) showCurrentImage(); });
@@ -93,17 +182,40 @@
     // Confirm
     els.btnConfirm.addEventListener('click', toggleConfirm);
 
-    // Zoom
-    els.btnZoomIn.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomIn()));
-    els.btnZoomOut.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomOut()));
-    els.btnZoomReset.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
-    els.btnZoomCenter.addEventListener('click', () => { CanvasManager.centerImage(); });
-    els.zoomInput.addEventListener('change', onZoomInputChange);
-    els.zoomInput.addEventListener('blur', onZoomInputChange);
-
     // Mode
     els.btnModeSelect.addEventListener('click', () => setMode('select'));
     els.btnModeAdd.addEventListener('click', () => setMode('add'));
+
+    // View controls (sidebar)
+    els.btnZoomReset.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
+    els.btnZoomCenter.addEventListener('click', () => CanvasManager.centerImage());
+
+    // Flyout buttons
+    els.btnZoomPanel.addEventListener('click', () => openFlyout('zoom'));
+    els.btnProgress.addEventListener('click', () => {
+      updateProgressStats();
+      openFlyout('progress');
+    });
+    els.btnObjPanel.addEventListener('click', () => {
+      openFlyout('objects');
+    });
+    els.btnOtherMenu.addEventListener('click', () => openFlyout('other'));
+
+    // Overlay close
+    els.flyoutOverlay.addEventListener('click', () => closeFlyout());
+
+    // Flyout close buttons
+    document.querySelectorAll('[data-close-flyout]').forEach(btn => {
+      btn.addEventListener('click', () => closeFlyout());
+    });
+
+    // Zoom panel controls
+    els.btnZoomIn.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomIn()));
+    els.btnZoomOut.addEventListener('click', () => updateZoomDisplay(CanvasManager.zoomOut()));
+    els.zoomInput.addEventListener('change', onZoomInputChange);
+    els.zoomInput.addEventListener('blur', onZoomInputChange);
+    els.btnZoomReset2.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
+    els.btnZoomCenter2.addEventListener('click', () => CanvasManager.centerImage());
 
     // Labels
     els.btnAddLabel.addEventListener('click', () => {
@@ -117,50 +229,51 @@
       els.addLabelForm.classList.add('hidden');
       els.newLabelInput.value = '';
     });
-    els.newLabelInput.addEventListener('keydown', (e) => {
+    els.newLabelInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') onAddLabel();
+      if (e.key === 'Escape') {
+        els.addLabelForm.classList.add('hidden');
+        els.newLabelInput.value = '';
+      }
     });
 
-    // Fullscreen
-    els.btnFullscreen.addEventListener('click', toggleFullscreen);
+    // Other menu
+    els.btnDownloadZip.addEventListener('click', () => { closeFlyout(); onDownloadZip(); });
+    els.btnReload.addEventListener('click', () => { closeFlyout(); showLoadScreen(); });
+    els.btnVersionInfo.addEventListener('click', () => { closeFlyout(); showVersionModal(); });
 
-    // Reload & Download
-    els.btnDownloadZip.addEventListener('click', onDownloadZip);
-    els.btnReload.addEventListener('click', showLoadScreen);
+    // Version modal
+    els.btnCloseModal.addEventListener('click', closeVersionModal);
+    els.modalVersion.addEventListener('click', e => {
+      if (e.target === els.modalVersion) closeVersionModal();
+    });
   }
 
   // ─── File Loading ──────────────────────────────────────────
   async function onFolderSelected(e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     showProgress();
     try {
-      await DataManager.loadFromFileList(files, (done, total) => {
-        updateProgress(done, total);
-      });
+      await DataManager.loadFromFileList(files, updateProgress);
       onDataLoaded();
     } catch (err) {
-      console.error('フォルダ読み込みエラー:', err);
+      console.error(err);
       alert('ファイルの読み込みに失敗しました。');
       hideProgress();
     }
-    // reset input so same folder can be re-selected
     e.target.value = '';
   }
 
   async function onZipSelected(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     showProgress();
     try {
-      await DataManager.loadFromZip(file, (done, total) => {
-        updateProgress(done, total);
-      });
+      await DataManager.loadFromZip(file, updateProgress);
       onDataLoaded();
     } catch (err) {
-      console.error('ZIP読み込みエラー:', err);
+      console.error(err);
       alert('ZIPファイルの読み込みに失敗しました。');
       hideProgress();
     }
@@ -172,16 +285,12 @@
     els.progressFill.style.width = '0%';
     els.progressText.textContent = '読み込み中...';
   }
-
   function updateProgress(done, total) {
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     els.progressFill.style.width = pct + '%';
     els.progressText.textContent = `読み込み中... ${done} / ${total}`;
   }
-
-  function hideProgress() {
-    els.loadProgress.classList.add('hidden');
-  }
+  function hideProgress() { els.loadProgress.classList.add('hidden'); }
 
   function onDataLoaded() {
     if (DataManager.count() === 0) {
@@ -189,64 +298,55 @@
       hideProgress();
       return;
     }
-
-    // Collect labels and assign colors
     initLabels();
-
-    // Switch to app view
     els.loadScreen.classList.add('hidden');
     els.app.classList.remove('hidden');
-
-    // Set initial mode
     setMode('select');
-
-    // Show first image
     showCurrentImage();
   }
 
   // ─── Labels ────────────────────────────────────────────────
   function initLabels() {
-    // Collect from all JSON files
     const fromData = DataManager.collectAllLabels();
-    // Merge with any existing in Storage
     const storedColors = Storage.getLabelColors();
     const fromStorage = Object.keys(storedColors);
-
     const labelSet = new Set([...fromData, ...fromStorage]);
     _labels = [...labelSet].sort();
-
-    // Assign colors
     _labelColors = {};
     for (const label of _labels) {
       _labelColors[label] = Storage.getOrAssignColor(label);
     }
+    // Auto-select first label
+    _activeLabel = _labels.length > 0 ? _labels[0] : null;
   }
 
   function renderLabelList() {
     els.labelList.innerHTML = '';
-
     for (const label of _labels) {
-      const color = _labelColors[label] || '#e94560';
+      const color = _labelColors[label] || '#2563eb';
+      const isActive = label === _activeLabel;
 
       const item = document.createElement('div');
-      item.className = 'label-item';
+      item.className = 'label-item' + (isActive ? ' active-label' : '');
+      item.dataset.label = label;
 
-      // Color swatch with hidden color input
+      // Color swatch
       const swatch = document.createElement('label');
       swatch.className = 'label-swatch';
       swatch.style.background = color;
-
       const colorInput = document.createElement('input');
       colorInput.type = 'color';
       colorInput.className = 'label-swatch-input';
       colorInput.value = color;
-      colorInput.addEventListener('input', (e) => {
+      colorInput.addEventListener('input', e => {
+        e.stopPropagation();
         const newColor = e.target.value;
         swatch.style.background = newColor;
         _labelColors[label] = newColor;
         Storage.setLabelColor(label, newColor);
         CanvasManager.setLabelColors(_labelColors);
       });
+      colorInput.addEventListener('click', e => e.stopPropagation());
       swatch.appendChild(colorInput);
 
       const name = document.createElement('span');
@@ -256,59 +356,60 @@
       const del = document.createElement('button');
       del.className = 'label-del';
       del.textContent = '×';
-      del.addEventListener('click', () => deleteLabel(label));
+      del.addEventListener('click', e => { e.stopPropagation(); deleteLabel(label); });
 
       item.appendChild(swatch);
       item.appendChild(name);
       item.appendChild(del);
+
+      // Tap label item: activate or change selected object's label
+      item.addEventListener('click', () => onLabelItemClick(label));
+
       els.labelList.appendChild(item);
     }
   }
 
-  function populateAddLabelSelect() {
-    els.selectAddLabel.innerHTML = '';
-    if (_labels.length === 0) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = '(ラベルなし)';
-      els.selectAddLabel.appendChild(opt);
-      return;
+  function onLabelItemClick(label) {
+    const prevActive = _activeLabel;
+    _activeLabel = label;
+
+    // If in select mode and an object is selected → change its label
+    const mode = CanvasManager.getMode();
+    const selIdx = CanvasManager.getSelectedIdx();
+    if (mode === 'select' && selIdx >= 0) {
+      const file = DataManager.current();
+      if (file) {
+        const shapes = DataManager.getShapes(file);
+        if (shapes[selIdx]) {
+          shapes[selIdx].label = label;
+          DataManager.updateShape(file, selIdx, shapes[selIdx]);
+          CanvasManager.setShapes(shapes, _labelColors);
+          renderObjectList(shapes);
+        }
+      }
     }
-    for (const label of _labels) {
-      const opt = document.createElement('option');
-      opt.value = label;
-      opt.textContent = label;
-      els.selectAddLabel.appendChild(opt);
-    }
+
+    renderLabelList();
   }
 
   function onAddLabel() {
     const name = els.newLabelInput.value.trim();
     if (!name) return;
-
-    if (_labels.includes(name)) {
-      alert('このラベルは既に存在します。');
-      return;
-    }
-
-    const color = els.newLabelColor.value || '#e94560';
+    if (_labels.includes(name)) { alert('このラベルは既に存在します。'); return; }
+    const color = els.newLabelColor.value || '#2563eb';
     _labels.push(name);
     _labels.sort();
     _labelColors[name] = color;
     Storage.setLabelColor(name, color);
-
+    _activeLabel = name;  // auto-activate new label
     els.newLabelInput.value = '';
     els.addLabelForm.classList.add('hidden');
-
     renderLabelList();
-    populateAddLabelSelect();
     CanvasManager.setLabelColors(_labelColors);
   }
 
   function deleteLabel(label) {
     if (!confirm(`ラベル「${label}」を削除しますか？\nこのラベルを持つ全てのオブジェクトも削除されます。`)) return;
-
-    // Remove from all shapes in all files
     for (const file of DataManager.files) {
       if (!file.json || !file.json.shapes) continue;
       const oldLen = file.json.shapes.length;
@@ -318,16 +419,13 @@
         Storage.saveJson(file.name, file.json);
       }
     }
-
-    // Remove from labels list
     _labels = _labels.filter(l => l !== label);
     delete _labelColors[label];
     Storage.removeLabelColor(label);
-
+    if (_activeLabel === label) {
+      _activeLabel = _labels.length > 0 ? _labels[0] : null;
+    }
     renderLabelList();
-    populateAddLabelSelect();
-
-    // Refresh current view
     const file = DataManager.current();
     if (file) {
       const shapes = DataManager.getShapes(file);
@@ -340,18 +438,13 @@
   function renderObjectList(shapes) {
     els.objectList.innerHTML = '';
     els.objCount.textContent = shapes ? shapes.length : 0;
-
     if (!shapes) return;
-
     const selectedIdx = CanvasManager.getSelectedIdx();
-
     for (let i = 0; i < shapes.length; i++) {
       const shape = shapes[i];
-      const color = _labelColors[shape.label] || '#e94560';
-
+      const color = _labelColors[shape.label] || '#2563eb';
       const item = document.createElement('div');
       item.className = 'obj-item' + (i === selectedIdx ? ' selected' : '');
-      item.dataset.idx = i;
 
       const swatch = document.createElement('span');
       swatch.className = 'obj-swatch';
@@ -368,12 +461,8 @@
       const del = document.createElement('button');
       del.className = 'obj-del';
       del.textContent = '×';
-      del.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteObject(i);
-      });
+      del.addEventListener('click', e => { e.stopPropagation(); deleteObject(i); });
 
-      // Click to select
       item.addEventListener('click', () => {
         CanvasManager.setSelectedIdx(i);
         renderObjectList(shapes);
@@ -390,7 +479,6 @@
   function deleteObject(idx) {
     const file = DataManager.current();
     if (!file) return;
-
     DataManager.removeShape(file, idx);
     const shapes = DataManager.getShapes(file);
     CanvasManager.setShapes(shapes, _labelColors);
@@ -401,40 +489,21 @@
   async function showCurrentImage() {
     const file = DataManager.current();
     if (!file) return;
-
-    // Update nav info
     els.fileName.textContent = file.name;
     els.fileCounter.textContent = `${DataManager.index() + 1} / ${DataManager.count()}`;
-
-    // Update progress stats
     updateProgressStats();
-
-    // Update confirm button
     updateConfirmButton(file.name);
-
-    // Load image
     try {
       await CanvasManager.loadImage(file.imageURL);
-    } catch (err) {
-      console.error('画像読み込みエラー:', err);
-    }
-
-    // Set shapes
+    } catch (err) { console.error(err); }
     const shapes = DataManager.getShapes(file);
     CanvasManager.setShapes(shapes, _labelColors);
-
-    // Update object list
     renderObjectList(shapes);
-
-    // Update label list
     renderLabelList();
-    populateAddLabelSelect();
-
-    // Update zoom display
     updateZoomDisplay(CanvasManager.getZoom());
   }
 
-  // ─── Progress Stats ────────────────────────────────────────
+  // ─── Progress ──────────────────────────────────────────────
   function updateProgressStats() {
     const total = DataManager.count();
     const confirmed = Storage.getConfirmed();
@@ -442,20 +511,16 @@
     for (const file of DataManager.files) {
       if (confirmed.has(file.name)) doneCount++;
     }
-    const left = total - doneCount;
-
     els.statTotal.textContent = total;
     els.statDone.textContent = doneCount;
-    els.statLeft.textContent = left;
+    els.statLeft.textContent = total - doneCount;
   }
 
   // ─── Confirm ───────────────────────────────────────────────
   function toggleConfirm() {
     const file = DataManager.current();
     if (!file) return;
-
-    const isNowConfirmed = Storage.isConfirmed(file.name);
-    Storage.setConfirmed(file.name, !isNowConfirmed);
+    Storage.setConfirmed(file.name, !Storage.isConfirmed(file.name));
     updateConfirmButton(file.name);
     updateProgressStats();
   }
@@ -464,10 +529,10 @@
     const confirmed = Storage.isConfirmed(filename);
     if (confirmed) {
       els.btnConfirm.classList.add('confirmed');
-      els.confirmLabel.textContent = '確認済み';
+      els.confirmLabel.textContent = '確認済';
     } else {
       els.btnConfirm.classList.remove('confirmed');
-      els.confirmLabel.textContent = '確認済みにする';
+      els.confirmLabel.textContent = '確認';
     }
   }
 
@@ -475,33 +540,18 @@
   function updateZoomDisplay(zoom) {
     els.zoomInput.value = Math.round(zoom * 100);
   }
-
   function onZoomInputChange() {
     const val = parseInt(els.zoomInput.value, 10);
-    if (isNaN(val) || val < 10) {
-      els.zoomInput.value = 10;
-      CanvasManager.setZoom(0.1);
-    } else if (val > 500) {
-      els.zoomInput.value = 500;
-      CanvasManager.setZoom(5.0);
-    } else {
-      CanvasManager.setZoom(val / 100);
-    }
+    if (isNaN(val) || val < 10) { els.zoomInput.value = 10; CanvasManager.setZoom(0.1); }
+    else if (val > 800) { els.zoomInput.value = 800; CanvasManager.setZoom(8.0); }
+    else CanvasManager.setZoom(val / 100);
   }
 
   // ─── Mode ──────────────────────────────────────────────────
   function setMode(mode) {
     CanvasManager.setMode(mode);
-
     els.btnModeSelect.classList.toggle('active', mode === 'select');
     els.btnModeAdd.classList.toggle('active', mode === 'add');
-
-    if (mode === 'add') {
-      els.addLabelPicker.classList.remove('hidden');
-      populateAddLabelSelect();
-    } else {
-      els.addLabelPicker.classList.add('hidden');
-    }
   }
 
   // ─── Canvas Callback ──────────────────────────────────────
@@ -511,50 +561,39 @@
 
     switch (eventType) {
       case 'select': {
-        // Update object list selection highlight
         const shapes = DataManager.getShapes(file);
         renderObjectList(shapes);
+        // Also update object panel if open
         break;
       }
-
       case 'addShape': {
-        // data = { x1, y1, x2, y2 }
-        const label = els.selectAddLabel.value;
+        const label = _activeLabel;
         if (!label) {
-          alert('ラベルを選択してください。\n先にラベルを追加するか、ラベル一覧から選択してください。');
+          alert('ラベルを選択してください。\nラベル一覧からラベルをタップして選択してください。');
           return;
         }
         const { w, h } = CanvasManager.getImageSize();
         const shape = DataManager.makeRectShape(label, data.x1, data.y1, data.x2, data.y2, w, h);
-
-        // Ensure this label is in our labels list
         if (!_labels.includes(label)) {
           _labels.push(label);
           _labels.sort();
           _labelColors[label] = Storage.getOrAssignColor(label);
           renderLabelList();
-          populateAddLabelSelect();
         }
-
         DataManager.addShape(file, shape);
         const shapes = DataManager.getShapes(file);
         CanvasManager.setShapes(shapes, _labelColors);
-        // Select the newly added shape
         CanvasManager.setSelectedIdx(shapes.length - 1);
         renderObjectList(shapes);
         break;
       }
-
       case 'shapeUpdated': {
-        // data = idx. Shape points were already updated by CanvasManager
-        // Just mark as modified in DataManager
         const shapes = DataManager.getShapes(file);
         if (data >= 0 && data < shapes.length) {
           DataManager.updateShape(file, data, shapes[data]);
         }
         break;
       }
-
       case 'zoom': {
         updateZoomDisplay(CanvasManager.getZoom());
         break;
@@ -562,66 +601,80 @@
     }
   }
 
-  // ─── Fullscreen ────────────────────────────────────────────
-  function toggleFullscreen() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
+  // ─── Version Modal ─────────────────────────────────────────
+  async function showVersionModal() {
+    els.modalVersion.classList.add('open');
+
+    const ver = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : null;
+    if (!ver) {
+      els.mdContent.innerHTML = '<p>バージョン情報が見つかりません。</p>';
+      return;
     }
+
+    els.modalVersionTitle.textContent = `PenAno v${ver.version}`;
+    els.mdContent.innerHTML = '<p style="color:var(--text2);">読み込み中...</p>';
+    els.mdOlderLink.style.display = 'none';
+
+    try {
+      const res = await fetch(ver.docFile + '?t=' + Date.now());
+      if (!res.ok) throw new Error('fetch failed');
+      const md = await res.text();
+      // Use marked.js for rendering
+      const html = marked.parse(md);
+      els.mdContent.innerHTML = html;
+      // Open links in new tab
+      els.mdContent.querySelectorAll('a').forEach(a => {
+        a.target = '_blank';
+        a.rel = 'noopener';
+      });
+    } catch (e) {
+      els.mdContent.innerHTML = `
+        <h1>PenAno v${ver.version}</h1>
+        <p style="color:var(--text2);">リリースノートを読み込めませんでした。<br>${ver.docFile} を確認してください。</p>
+      `;
+    }
+
+    // Show older changelog link
+    if (ver.githubRepo) {
+      els.mdOlderLink.style.display = 'block';
+      els.mdOlderLinkAnchor.href = ver.githubRepo + '/blob/main/doc/CHANGELOG.md';
+    }
+  }
+
+  function closeVersionModal() {
+    els.modalVersion.classList.remove('open');
   }
 
   // ─── Download ZIP ──────────────────────────────────────────
   async function onDownloadZip() {
     const zip = new JSZip();
     let hasData = false;
-
     for (const file of DataManager.files) {
       if (file.json) {
         const base = file.name.replace(/\.[^.]+$/, '');
-        const jsonStr = JSON.stringify(file.json, null, 2);
-        zip.file(base + '.json', jsonStr);
+        zip.file(base + '.json', JSON.stringify(file.json, null, 2));
         hasData = true;
       }
     }
-
-    if (!hasData) {
-      alert('保存するデータがありません。');
-      return;
-    }
-
+    if (!hasData) { alert('保存するデータがありません。'); return; }
     try {
       const content = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
       const url = URL.createObjectURL(content);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'annotations.zip';
-      document.body.appendChild(a);
-      a.click();
+      a.href = url; a.download = 'annotations.zip';
+      document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('ZIP作成エラー:', err);
-      alert('ZIPの作成に失敗しました。');
+      console.error(err); alert('ZIPの作成に失敗しました。');
     }
   }
 
-  // ─── Reload (back to load screen) ─────────────────────────
+  // ─── Reload ────────────────────────────────────────────────
   function showLoadScreen() {
     els.app.classList.add('hidden');
     els.loadScreen.classList.remove('hidden');
     els.loadProgress.classList.add('hidden');
-
-    // Reset file inputs
     els.fileInputFolder.value = '';
     els.fileInputZip.value = '';
   }

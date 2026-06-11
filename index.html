@@ -5,20 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PenAno">
+  <meta name="theme-color" content="#0d0d14">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>PenAno</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Load Screen -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       Load Screen
+  ════════════════════════════════════════════════════════ -->
   <div id="loadScreen" class="load-screen">
     <div class="load-card">
       <div class="load-logo">
         <svg viewBox="0 0 48 48" fill="none">
-          <rect x="4" y="4" width="40" height="40" rx="8" fill="#1a1a2e"/>
-          <rect x="10" y="10" width="28" height="20" rx="3" fill="#16213e"/>
-          <rect x="13" y="13" width="22" height="14" rx="2" fill="#0f3460"/>
-          <path d="M18 34h12M20 37h8" stroke="#e94560" stroke-width="2" stroke-linecap="round"/>
-          <path d="M16 20l4 4 8-8" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="2" y="2" width="44" height="44" rx="10" fill="#131928"/>
+          <rect x="10" y="8" width="28" height="24" rx="3" fill="#1a2035"/>
+          <path d="M16 22l5 5 11-11" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="10" y="36" width="18" height="3" rx="1.5" fill="#243050"/>
+          <rect x="10" y="41" width="12" height="3" rx="1.5" fill="#243050"/>
         </svg>
       </div>
       <h1>PenAno</h1>
@@ -49,177 +56,303 @@
         <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
         <p id="progressText">読み込み中...</p>
       </div>
+
+      <div class="load-version-bar">
+        <span id="loadVersionText">v—</span>
+        <button class="load-version-btn" id="btnLoadVersionInfo">リリースノート</button>
+      </div>
     </div>
   </div>
 
-  <!-- Main App -->
+  <!-- ═══════════════════════════════════════════════════════
+       Main App
+  ════════════════════════════════════════════════════════ -->
   <div id="app" class="app hidden">
 
-    <!-- LANDSCAPE: sidebar left, canvas right -->
-    <!-- PORTRAIT: canvas top, sidebar bottom -->
-
+    <!-- ── Sidebar ─────────────────────────────────────── -->
     <aside id="sidebar" class="sidebar">
-      <div class="sidebar-inner">
 
-        <!-- File Nav -->
-        <section class="panel" id="panelNav">
-          <div class="panel-header">
-            <span class="panel-title">ナビゲーション</span>
-            <button class="icon-btn" id="btnFullscreen" title="全画面">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/>
-                <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-              </svg>
-            </button>
+      <!-- 1. File Navigation -->
+      <div class="sb-section">
+        <div class="file-nav">
+          <button class="nav-btn" id="btnPrev" title="前へ">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15,18 9,12 15,6"/>
+            </svg>
+          </button>
+          <div class="file-info">
+            <div class="file-name" id="fileName">—</div>
+            <div class="file-counter" id="fileCounter">0 / 0</div>
           </div>
+          <button class="nav-btn" id="btnNext" title="次へ">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9,18 15,12 9,6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-          <div class="file-nav">
-            <button class="nav-btn" id="btnPrev">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15,18 9,12 15,6"/>
-              </svg>
-            </button>
-            <div class="file-info">
-              <div class="file-name" id="fileName">—</div>
-              <div class="file-counter" id="fileCounter">0 / 0</div>
-            </div>
-            <button class="nav-btn" id="btnNext">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9,18 15,12 9,6"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Progress Stats -->
-          <div class="progress-stats">
-            <div class="stat">
-              <span class="stat-val" id="statTotal">0</span>
-              <span class="stat-lbl">全枚数</span>
-            </div>
-            <div class="stat">
-              <span class="stat-val" id="statDone">0</span>
-              <span class="stat-lbl">確認済</span>
-            </div>
-            <div class="stat">
-              <span class="stat-val" id="statLeft">0</span>
-              <span class="stat-lbl">残り</span>
-            </div>
-          </div>
-
-          <!-- Confirmed check -->
-          <button class="check-btn" id="btnConfirm">
+      <!-- 2. Confirm / Mode / Progress -->
+      <div class="sb-section">
+        <div class="action-row">
+          <!-- 確認 -->
+          <button class="act-btn confirm-btn" id="btnConfirm" title="確認済みにする">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20,6 9,17 4,12"/>
             </svg>
-            <span id="confirmLabel">確認済みにする</span>
+            <span id="confirmLabel" style="font-size:10px;">確認</span>
           </button>
-        </section>
+          <!-- 選択 -->
+          <button class="act-btn mode-btn active" id="btnModeSelect" title="選択モード">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 3l14 9-7 1-4 7z"/>
+            </svg>
+            <span style="font-size:10px;">選択</span>
+          </button>
+          <!-- 追加 -->
+          <button class="act-btn mode-btn" id="btnModeAdd" title="追加モード">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span style="font-size:10px;">追加</span>
+          </button>
+          <!-- 進捗 → -->
+          <button class="act-btn expand-btn" id="btnProgress" title="進捗を表示">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12,7 12,12 16,14"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-        <!-- Zoom Control -->
-        <section class="panel" id="panelZoom">
-          <div class="panel-header"><span class="panel-title">表示倍率</span></div>
-          <div class="zoom-row">
-            <button class="zoom-btn" id="btnZoomOut">−</button>
-            <input type="number" id="zoomInput" value="100" min="10" max="500" step="10" class="zoom-input">
-            <span class="zoom-pct">%</span>
-            <button class="zoom-btn" id="btnZoomIn">＋</button>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <button class="zoom-reset" id="btnZoomReset">100%に戻す</button>
-            <button class="zoom-reset" id="btnZoomCenter">中心へ戻る</button>
-          </div>
-        </section>
+      <!-- 3. View Controls -->
+      <div class="sb-section">
+        <div class="view-row">
+          <button class="view-btn" id="btnZoomReset" title="100%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+            100%
+          </button>
+          <button class="view-btn" id="btnZoomCenter" title="中心へ戻る">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+            中心
+          </button>
+          <!-- ズーム詳細 → -->
+          <button class="view-btn expand-btn" id="btnZoomPanel" title="ズーム詳細">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-        <!-- Mode -->
-        <section class="panel" id="panelMode">
-          <div class="panel-header"><span class="panel-title">編集モード</span></div>
-          <div class="mode-switch">
-            <button class="mode-btn active" id="btnModeSelect" data-mode="select">
+      <!-- 4. Labels (flex:1, scrollable) -->
+      <div class="sb-section labels-section">
+        <div class="labels-header">
+          <span class="labels-title">ラベル一覧</span>
+          <div class="labels-actions">
+            <button class="icon-btn" id="btnObjPanel" title="オブジェクトリスト">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 3l14 9-7 1-4 7z"/>
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
               </svg>
-              選択
             </button>
-            <button class="mode-btn" id="btnModeAdd" data-mode="add">
+            <button class="icon-btn" id="btnAddLabel" title="ラベルを追加">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              追加
             </button>
           </div>
-          <!-- Add mode label picker -->
-          <div id="addLabelPicker" class="add-label-picker hidden">
-            <span class="picker-hint">追加するラベル:</span>
-            <select id="selectAddLabel" class="label-select"></select>
-          </div>
-        </section>
+        </div>
 
-        <!-- Labels -->
-        <section class="panel" id="panelLabels">
-          <div class="panel-header">
-            <span class="panel-title">ラベル一覧</span>
-            <button class="icon-btn" id="btnAddLabel" title="ラベル追加">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
+        <div id="labelList" class="label-list"></div>
+
+        <div id="addLabelForm" class="add-label-form hidden">
+          <input type="text" id="newLabelInput" placeholder="ラベル名" class="text-input">
+          <div class="form-row">
+            <input type="color" id="newLabelColor" value="#2563eb" class="color-picker">
+            <button class="small-btn confirm-add-btn" id="btnConfirmAddLabel">追加</button>
+            <button class="small-btn cancel-btn" id="btnCancelAddLabel">×</button>
           </div>
-          <div id="labelList" class="label-list"></div>
-          <div id="addLabelForm" class="add-label-form hidden">
-            <input type="text" id="newLabelInput" placeholder="ラベル名" class="text-input">
-            <div class="form-row">
-              <input type="color" id="newLabelColor" value="#e94560" class="color-picker">
-              <button class="small-btn confirm-btn" id="btnConfirmAddLabel">追加</button>
-              <button class="small-btn cancel-btn" id="btnCancelAddLabel">×</button>
+        </div>
+      </div>
+
+      <!-- 5. Footer: Brand + その他 -->
+      <div class="sb-section footer-section">
+        <div class="sb-footer">
+          <div class="app-brand">
+            <div class="brand-logo">
+              <svg viewBox="0 0 48 48" fill="none">
+                <rect x="2" y="2" width="44" height="44" rx="10" fill="#131928"/>
+                <rect x="10" y="8" width="28" height="24" rx="3" fill="#1a2035"/>
+                <path d="M16 22l5 5 11-11" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
+            <span class="brand-name">PenAno</span>
           </div>
-        </section>
-
-        <!-- Objects in current image -->
-        <section class="panel" id="panelObjects">
-          <div class="panel-header">
-            <span class="panel-title">オブジェクト</span>
-            <span class="badge" id="objCount">0</span>
-          </div>
-          <div id="objectList" class="object-list"></div>
-        </section>
-
-        <!-- Reload / Download -->
-        <section class="panel panel-footer">
-          <button class="load-btn primary small" id="btnDownloadZip" style="margin-bottom: 8px;">
+          <button class="act-btn expand-btn" id="btnOtherMenu" title="その他">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+              <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+              <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
             </svg>
-            ZIPで保存
           </button>
-          <button class="load-btn secondary small" id="btnReload">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="1,4 1,10 7,10"/>
-              <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
-            </svg>
-            別のデータを開く
-          </button>
-        </section>
+        </div>
+      </div>
 
-      </div><!-- sidebar-inner -->
-    </aside>
+    </aside><!-- /sidebar -->
 
-    <!-- Canvas Area -->
+    <!-- ── Canvas ──────────────────────────────────────── -->
     <main id="canvasArea" class="canvas-area">
       <div id="canvasWrapper" class="canvas-wrapper">
         <canvas id="mainCanvas"></canvas>
-        <!-- SVG overlay for annotations -->
         <svg id="annotSvg" class="annot-svg"></svg>
       </div>
     </main>
 
-  </div><!-- app -->
+  </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       Fly-out Panels
+  ════════════════════════════════════════════════════════ -->
+
+  <!-- Overlay (closes active flyout) -->
+  <div id="flyoutOverlay" class="flyout-overlay"></div>
+
+  <!-- Zoom Panel -->
+  <div id="flyoutZoom" class="flyout-panel">
+    <div class="flyout-header">
+      <span class="flyout-title">ズーム</span>
+      <button class="flyout-close" data-close-flyout>×</button>
+    </div>
+    <div class="flyout-body">
+      <div class="zoom-row">
+        <button class="zoom-btn" id="btnZoomOut">−</button>
+        <input type="number" id="zoomInput" value="100" min="10" max="800" step="10" class="zoom-input">
+        <span class="zoom-pct">%</span>
+        <button class="zoom-btn" id="btnZoomIn">＋</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button class="view-btn" id="btnZoomReset2" style="flex:1;height:36px;">100%</button>
+        <button class="view-btn" id="btnZoomCenter2" style="flex:1;height:36px;">中心へ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Panel -->
+  <div id="flyoutProgress" class="flyout-panel">
+    <div class="flyout-header">
+      <span class="flyout-title">進捗</span>
+      <button class="flyout-close" data-close-flyout>×</button>
+    </div>
+    <div class="flyout-body">
+      <div class="progress-stats">
+        <div class="stat">
+          <span class="stat-val" id="statTotal">0</span>
+          <span class="stat-lbl">全枚数</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val" id="statDone">0</span>
+          <span class="stat-lbl">確認済</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val" id="statLeft">0</span>
+          <span class="stat-lbl">残り</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Object List Panel -->
+  <div id="flyoutObjects" class="flyout-panel">
+    <div class="flyout-header">
+      <span class="flyout-title">オブジェクト</span>
+      <span class="obj-count-badge" id="objCount">0</span>
+      <button class="flyout-close" data-close-flyout>×</button>
+    </div>
+    <div class="flyout-body">
+      <div id="objectList" class="object-list"></div>
+    </div>
+  </div>
+
+  <!-- Other Menu Panel -->
+  <div id="flyoutOther" class="flyout-panel">
+    <div class="flyout-header">
+      <span class="flyout-title">その他</span>
+      <button class="flyout-close" data-close-flyout>×</button>
+    </div>
+    <div class="flyout-body">
+      <button class="menu-btn" id="btnDownloadZip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7,10 12,15 17,10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        ZIPで保存
+      </button>
+      <button class="menu-btn" id="btnReload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1,4 1,10 7,10"/>
+          <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+        </svg>
+        別のデータを開く
+      </button>
+      <div class="menu-separator"></div>
+      <button class="menu-btn" id="btnVersionInfo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        バージョン情報
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       Version Modal
+  ════════════════════════════════════════════════════════ -->
+  <div id="modalVersion" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title" id="modalVersionTitle">バージョン情報</span>
+        <button class="modal-close" id="btnCloseModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="mdContent" class="md-content">
+          <p style="color:var(--text2);">読み込み中...</p>
+        </div>
+        <div class="md-older-link" id="mdOlderLink" style="display:none;">
+          過去のリリースノートは
+          <a id="mdOlderLinkAnchor" href="#" target="_blank" rel="noopener">GitHub の CHANGELOG</a>
+          をご覧ください。
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="lib/jszip.min.js"></script>
+  <script src="lib/marked.min.js"></script>
+  <script src="version.js"></script>
   <script src="storage.js"></script>
   <script src="data.js"></script>
   <script src="canvas.js"></script>

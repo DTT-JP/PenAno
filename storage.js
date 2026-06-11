@@ -1,11 +1,8 @@
 /**
- * storage.js – ローカル永続化（Cookie / localStorage フォールバック）
- * ラベルカラー・確認済みフラグを保存
+ * storage.js – ローカル永続化（localStorage フォールバック）
  */
 const Storage = (() => {
   const PREFIX = 'lme_';
-
-  // localStorage ラッパー（エラー時はメモリ）
   const mem = {};
   function set(key, value) {
     try { localStorage.setItem(PREFIX + key, JSON.stringify(value)); } catch(e) { mem[key] = value; }
@@ -20,24 +17,17 @@ const Storage = (() => {
     try { localStorage.removeItem(PREFIX + key); } catch(e) { delete mem[key]; }
   }
 
-  // ─── Label Colors ───────────────────────────────────────────
-  // colors: { labelName: "#rrggbb" }
   const DEFAULT_PALETTE = [
-    '#e94560','#4f8fff','#3ecf6e','#f0a030','#c084fc',
-    '#06b6d4','#f97316','#a3e635','#fb7185','#818cf8'
+    '#2563eb','#3b82f6','#22c55e','#f59e0b','#a855f7',
+    '#06b6d4','#f97316','#84cc16','#ec4899','#6366f1'
   ];
-  let _colorIdx = 0;
 
-  function getLabelColors() {
-    return get('label_colors', {});
-  }
-
+  function getLabelColors() { return get('label_colors', {}); }
   function setLabelColor(label, color) {
     const colors = getLabelColors();
     colors[label] = color;
     set('label_colors', colors);
   }
-
   function getOrAssignColor(label) {
     const colors = getLabelColors();
     if (colors[label]) return colors[label];
@@ -46,37 +36,22 @@ const Storage = (() => {
     setLabelColor(label, color);
     return color;
   }
-
   function removeLabelColor(label) {
     const colors = getLabelColors();
     delete colors[label];
     set('label_colors', colors);
   }
 
-  // ─── Confirmed Files ────────────────────────────────────────
-  // confirmed: Set of filenames
-  function getConfirmed() {
-    return new Set(get('confirmed', []));
-  }
-
+  function getConfirmed() { return new Set(get('confirmed', [])); }
   function setConfirmed(filename, val) {
     const s = getConfirmed();
     if (val) s.add(filename); else s.delete(filename);
     set('confirmed', [...s]);
   }
+  function isConfirmed(filename) { return getConfirmed().has(filename); }
 
-  function isConfirmed(filename) {
-    return getConfirmed().has(filename);
-  }
-
-  // ─── JSON Data ──────────────────────────────────────────────
-  function saveJson(filename, json) {
-    set('json_' + filename, json);
-  }
-  
-  function getJson(filename) {
-    return get('json_' + filename, null);
-  }
+  function saveJson(filename, json) { set('json_' + filename, json); }
+  function getJson(filename) { return get('json_' + filename, null); }
 
   return { set, get, del, getLabelColors, setLabelColor, getOrAssignColor, removeLabelColor, getConfirmed, setConfirmed, isConfirmed, saveJson, getJson };
 })();

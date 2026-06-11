@@ -71,7 +71,27 @@ Safari ブラウザ内で LabelMe (JSON) 形式のラベリングデータの **
 
 ## 🚀 使い方
 
-ブラウザで `https://penano.dttjp.com` を開きます。
+### 1. ファイルを配信する
+
+静的ファイルなのでローカルWebサーバーで配信します。
+
+**Python の場合:**
+```bash
+cd PenAno
+python -m http.server 8080
+```
+
+**Node.js (npx) の場合:**
+```bash
+cd PenAno
+npx serve .
+```
+
+### 2. iPad の Safari でアクセス
+
+ブラウザで `http://<PCのIPアドレス>:8080` を開きます。
+
+> 💡 同じWi-Fiネットワーク上であればアクセスできます。
 
 **PWAとしてインストール（任意）:**
 1. Safari で上記URLを開く
@@ -117,8 +137,8 @@ PenAno/
 │   ├── jszip.min.js    # ZIP展開ライブラリ
 │   └── marked.min.js   # Markdownレンダリングライブラリ
 └── doc/
-    ├── CHANGELOG.md    # 全バージョンの変更履歴（GitHub用）
-    └── v1-1-0.md       # v1.1.0 リリースノート（アプリ内表示用）
+  ├── CHANGELOG.md    # 全バージョンの変更履歴（GitHub用）
+  └── v0-0-0.md       # 開発メモ / 現在の機能（アプリ内表示用）
 ```
 
 ---
@@ -133,12 +153,12 @@ PenAno/
 const APP_VERSION = {
   version: '1.2.0',           // バージョン番号
   date: '2026-07-01',         // リリース日
-  docFile: 'doc/v1-2-0.md',  // リリースノートのパス（.を-に置換）
+  docFile: 'doc/vX-X-X.md',  // リリースノートのパス（.を-に置換）
   githubRepo: 'https://github.com/DTT-JP/PenAno',
 };
 ```
 
-2. **`doc/v1-2-0.md` を作成する**（Markdown形式で自由に記述）
+2. **`doc/vX-X-X.md` を作成する**（Markdown形式で自由に記述）
 
 ```markdown
 # v1.2.0 – 2026-07-01
@@ -158,7 +178,7 @@ const APP_VERSION = {
 4. **`sw.js` のキャッシュ名を更新する**（古いキャッシュを破棄するため）
 
 ```js
-const CACHE_NAME = 'penano-v1-2-0';  // バージョンに合わせて変更
+const CACHE_NAME = 'penano-vX-X-X';  // バージョンに合わせて変更
 ```
 
 5. コミット・プッシュする
