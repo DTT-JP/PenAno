@@ -249,7 +249,7 @@
     els.modalVersion.addEventListener('click', e => {
       if (e.target === els.modalVersion) closeVersionModal();
     });
-    initSettings();
+    try { initSettings(); } catch(e) { console.error('initSettings:', e); }
   }
 
   // ─── File Loading ──────────────────────────────────────────
