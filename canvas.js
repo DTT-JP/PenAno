@@ -13,6 +13,18 @@ const CanvasManager = (() => {
   let _labelColors = {};
   let _activeLabel = null;
   let _behaviorSettings = {};
+  let _penSettings = {
+    drawWithPen: true,
+    drawWithTouch: false,
+    drawWithMouse: true,
+    fingerPanPreferred: true,
+    pinchZoom: true,
+    eraserDeletes: true,
+    palmRejection: true,
+    suppressBrowserGestures: true,
+  };
+  let _lastPenTime = 0;
+  const PALM_REJECTION_MS = 700;
   let _drag = null;
   let _justAdded = false;
   let _onShapesChanged = null;
@@ -33,6 +45,7 @@ const CanvasManager = (() => {
     area.addEventListener('touchstart', onTouchStart, { passive: false });
     area.addEventListener('touchmove',  onTouchMove,  { passive: false });
     area.addEventListener('touchend',   onTouchEnd,   { passive: false });
+    applyTouchAction();
   }
 
   function loadImage(url, options = {}) {
@@ -111,6 +124,14 @@ const CanvasManager = (() => {
   function setLabelColors(lc) { _labelColors = lc; renderAnnotations(); }
   function setActiveLabel(label) { _activeLabel = label || null; }
   function setBehaviorSettings(settings) { _behaviorSettings = { ...(settings || {}) }; }
+  function setPenSettings(settings) {
+    _penSettings = { ..._penSettings, ...(settings || {}) };
+    applyTouchAction();
+  }
+  function applyTouchAction() {
+    if (!area) return;
+    area.style.touchAction = _penSettings.suppressBrowserGestures === false ? 'auto' : 'none';
+  }
   function getSelectedIdx()   { return _selectedIdx; }
   function setSelectedIdx(i)  {
     if (i < 0 || i !== _selectedIdx) _justAdded = false;
@@ -339,10 +360,56 @@ const CanvasManager = (() => {
   const _pointers = new Map();
   let _pinchDist0 = null, _pinchZoom0 = null;
 
+  function shouldPreventBrowserGesture() {
+    return _penSettings.suppressBrowserGestures !== false;
+  }
+
+  function shouldIgnoreTouchForPalmRejection() {
+    return _penSettings.palmRejection !== false && Date.now() - _lastPenTime < PALM_REJECTION_MS;
+  }
+
+  function notePenInput(e) {
+    if (e && e.pointerType === 'pen') _lastPenTime = Date.now();
+  }
+
+  function shouldHandleAsDrawing(e) {
+    if (!e) return false;
+    const pointerType = e.pointerType || (e.touchType === 'stylus' ? 'pen' : 'touch');
+    if (pointerType === 'pen') return _penSettings.drawWithPen !== false;
+    if (pointerType === 'mouse') return _penSettings.drawWithMouse !== false;
+    if (pointerType === 'touch') {
+      if (shouldIgnoreTouchForPalmRejection()) return false;
+      return _penSettings.drawWithTouch === true && _penSettings.fingerPanPreferred !== true;
+    }
+    return true;
+  }
+
+  function isEraserInput(e) {
+    return !!(e && e.pointerType === 'pen' && (e.buttons === 32 || e.button === 5));
+  }
+
+  function deleteShapeAt(imgX, imgY) {
+    const hitIdx = hitTestShape(imgX, imgY);
+    const idx = _selectedIdx >= 0 ? _selectedIdx : hitIdx;
+    if (idx < 0) return false;
+    _drag = null;
+    _justAdded = false;
+    _selectedIdx = -1;
+    if (_onShapesChanged) _onShapesChanged('deleteShape', idx);
+    renderAnnotations();
+    return true;
+  }
+
   function onPointerDown(e) {
     if (e.pointerType === 'touch') return;
-    e.preventDefault();
+    notePenInput(e);
+    if (shouldPreventBrowserGesture()) e.preventDefault();
     const { x: ix, y: iy } = screenToImage(e.clientX, e.clientY);
+    if (_penSettings.eraserDeletes !== false && isEraserInput(e)) {
+      deleteShapeAt(ix, iy);
+      return;
+    }
+    const canDraw = shouldHandleAsDrawing(e);
     if (_mode === 'select') {
       const handle = hitTestHandle(ix, iy);
       if (handle && _selectedIdx >= 0) {
@@ -365,7 +432,7 @@ const CanvasManager = (() => {
       _drag = { type: 'pan', startX: e.clientX, startY: e.clientY, origOX: _offsetX, origOY: _offsetY };
       renderAnnotations();
       if (_onShapesChanged) _onShapesChanged('select', -1);
-    } else if (_mode === 'add') {
+    } else if (_mode === 'add' && canDraw) {
       _drag = { type: 'draw', startImgX: ix, startImgY: iy, curImgX: ix, curImgY: iy };
     }
   }
@@ -415,9 +482,16 @@ const CanvasManager = (() => {
   }
   function onPointerMove(e) {
     if (e.pointerType === 'touch') { hideCrosshair(); return; }
+    notePenInput(e);
     updateCrosshair(e.clientX, e.clientY);
+    if (_penSettings.eraserDeletes !== false && isEraserInput(e)) {
+      if (shouldPreventBrowserGesture()) e.preventDefault();
+      const { x: ix, y: iy } = screenToImage(e.clientX, e.clientY);
+      deleteShapeAt(ix, iy);
+      return;
+    }
     if (!_drag) return;
-    e.preventDefault();
+    if (shouldPreventBrowserGesture()) e.preventDefault();
     const { x: ix, y: iy } = screenToImage(e.clientX, e.clientY);
     if (_drag.type === 'pan') {
       _offsetX = _drag.origOX + (e.clientX - _drag.startX);
@@ -466,9 +540,13 @@ const CanvasManager = (() => {
   let _touchPanStart = null, _pinchActive = false;
 
   function onTouchStart(e) {
-    e.preventDefault();
+    if (shouldPreventBrowserGesture()) e.preventDefault();
     const touches = e.touches;
+    const firstTouch = touches[0] || (e.changedTouches && e.changedTouches[0]);
+    const firstIsPencil = firstTouch && firstTouch.touchType === 'stylus';
+    if (!firstIsPencil && shouldIgnoreTouchForPalmRejection()) { _touchPanStart = null; _drag = null; return; }
     if (touches.length === 2) {
+      if (_penSettings.pinchZoom === false) return;
       _pinchActive = true;
       _pinchDist0 = pinchDist(touches); _pinchZoom0 = _zoom;
       _touchPanStart = null; _drag = null; return;
@@ -478,6 +556,7 @@ const CanvasManager = (() => {
       const isPencil = t.touchType === 'stylus' || (e.changedTouches[0] && e.changedTouches[0].touchType === 'stylus');
       const { x: ix, y: iy } = screenToImage(t.clientX, t.clientY);
       if (isPencil) {
+        _lastPenTime = Date.now();
         if (_mode === 'select') {
           const handle = hitTestHandle(ix, iy);
           if (handle && _selectedIdx >= 0) {
@@ -495,18 +574,22 @@ const CanvasManager = (() => {
             }
             return;
           }
-        } else if (_mode === 'add') {
+        } else if (_mode === 'add' && shouldHandleAsDrawing({ pointerType: 'pen' })) {
           _drag = { type: 'draw', startImgX: ix, startImgY: iy, curImgX: ix, curImgY: iy }; return;
         }
+      }
+      if (!isPencil && _mode === 'add' && shouldHandleAsDrawing({ pointerType: 'touch' })) {
+        _drag = { type: 'draw', touchType: 'touch', startImgX: ix, startImgY: iy, curImgX: ix, curImgY: iy }; return;
       }
       _touchPanStart = { clientX: t.clientX, clientY: t.clientY, origOX: _offsetX, origOY: _offsetY };
     }
   }
 
   function onTouchMove(e) {
-    e.preventDefault();
+    if (shouldPreventBrowserGesture()) e.preventDefault();
     const touches = e.touches;
-    if (_pinchActive && touches.length === 2) {
+    if (shouldIgnoreTouchForPalmRejection() && !_drag) return;
+    if (_pinchActive && touches.length === 2 && _penSettings.pinchZoom !== false) {
       const d = pinchDist(touches);
       if (_pinchDist0 > 0) {
         const midX = (touches[0].clientX + touches[1].clientX) / 2;
@@ -520,7 +603,8 @@ const CanvasManager = (() => {
       const t = touches[0];
       const isPencil = t.touchType === 'stylus';
       const { x: ix, y: iy } = screenToImage(t.clientX, t.clientY);
-      if (isPencil && _drag) {
+      if (isPencil) _lastPenTime = Date.now();
+      if (_drag && (isPencil || _drag.touchType === 'touch')) {
         if (_drag.type === 'draw') {
           const p = clampPoint(ix, iy);
           const snapped = applySnapPoint(p.x, p.y, _activeLabel);
@@ -545,7 +629,7 @@ const CanvasManager = (() => {
     if (_drag) {
       const t = e.changedTouches[0];
       if (!t) { _drag = null; return; }
-      if (t.touchType === 'stylus') {
+      if (t.touchType === 'stylus' || _drag.touchType === 'touch') {
         const { x: ix, y: iy } = screenToImage(t.clientX, t.clientY);
         if (_drag.type === 'draw') {
           const endPoint = clampPoint(ix, iy);
@@ -611,5 +695,5 @@ const CanvasManager = (() => {
   function onShapesChanged(cb) { _onShapesChanged = cb; }
   function getImageSize() { return { w: _imgW, h: _imgH }; }
 
-  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setActiveLabel, setBehaviorSettings, setSelectedIdx, getSelectedIdx, setJustAdded, renderAnnotations, onShapesChanged, getImageSize };
+  return { init, loadImage, fitToView, resetZoom, centerImage, setZoom, getZoom, zoomIn, zoomOut, setMode, getMode, setShapes, setLabelColors, setActiveLabel, setBehaviorSettings, setPenSettings, setSelectedIdx, getSelectedIdx, setJustAdded, renderAnnotations, onShapesChanged, getImageSize };
 })();

@@ -37,7 +37,7 @@
   --radius-sm: calc(8px * var(--ui-scale));
   --radius-lg: calc(14px * var(--ui-scale));
   --font: -apple-system, 'Helvetica Neue', sans-serif;
-  touch-action: none;
+  touch-action: auto;
 }
 
 :root[data-theme="light"] {
@@ -535,6 +535,7 @@ html, body {
 .canvas-area {
   flex: 1; position: relative;
   overflow: hidden; background: var(--bg);
+  touch-action: none;
 }
 .canvas-wrapper {
   position: absolute; top: 0; left: 0;
@@ -1124,4 +1125,37 @@ html, body {
 .menu-action-btn.danger:active {
   background: color-mix(in srgb, var(--danger) 12%, var(--surface2));
   border-color: var(--danger);
+}
+
+/* ─── Pen/Input Diagnostics ───────────────────────────────── */
+.input-diagnostics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.input-diagnostics-row {
+  display: grid;
+  gap: 3px;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
+}
+.input-diagnostics-row span {
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+}
+.input-diagnostics-row strong {
+  color: var(--text);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .input-diagnostics { grid-template-columns: 1fr; }
 }

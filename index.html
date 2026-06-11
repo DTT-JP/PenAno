@@ -497,7 +497,52 @@
           </section>
           <section class="menu-section" id="menuSec-pen" data-menu-panel="pen">
             <h2>ペンと入力</h2>
-            <p>Phase 04: セクション骨格</p>
+            <div class="menu-group pen-settings-group">
+              <h3>入力デバイス</h3>
+              <label class="menu-field toggle-switch">
+                <span>ペンでラベル作成</span>
+                <input type="checkbox" id="penDrawWithPen" checked>
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>タッチでラベル作成</span>
+                <input type="checkbox" id="penDrawWithTouch">
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>マウスでラベル作成</span>
+                <input type="checkbox" id="penDrawWithMouse" checked>
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>指はパン優先</span>
+                <input type="checkbox" id="penFingerPanPreferred" checked>
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>ピンチズーム</span>
+                <input type="checkbox" id="penPinchZoom" checked>
+              </label>
+            </div>
+
+            <div class="menu-group pen-settings-group">
+              <h3>誤操作防止</h3>
+              <label class="menu-field toggle-switch">
+                <span>消しゴムボタンで削除</span>
+                <input type="checkbox" id="penEraserDeletes" checked>
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>パームリジェクション</span>
+                <input type="checkbox" id="penPalmRejection" checked>
+              </label>
+              <label class="menu-field toggle-switch">
+                <span>ブラウザジェスチャー抑制</span>
+                <input type="checkbox" id="penSuppressBrowserGestures" checked>
+              </label>
+              <p>直近にペン入力があった場合、手のひらや指の touch 操作を短時間無視します。ブラウザジェスチャー抑制はキャンバス領域に適用されます。</p>
+            </div>
+
+            <div class="menu-group pen-diagnostics-group">
+              <h3>入力診断パネル</h3>
+              <p>キャンバス上の最新入力をリアルタイム表示します。</p>
+              <div id="inputDiagnostics" class="input-diagnostics" aria-live="polite"></div>
+            </div>
           </section>
           <section class="menu-section" id="menuSec-app" data-menu-panel="app">
             <h2>アプリ</h2>

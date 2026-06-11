@@ -13,6 +13,7 @@ const Storage = (() => {
   const PREFIX = 'lme_';
   const DISPLAY_SETTINGS_KEY = PREFIX + 'display_settings';
   const BEHAVIOR_SETTINGS_KEY = PREFIX + 'behavior_settings';
+  const PEN_SETTINGS_KEY = PREFIX + 'pen_settings';
   const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
     theme: 'dark',
     handedness: 'right',
@@ -38,6 +39,16 @@ const Storage = (() => {
     minShapeSize: 4,
     warnOnClose: false,
     warnZipSizeMb: 200,
+  });
+  const DEFAULT_PEN_SETTINGS = Object.freeze({
+    drawWithPen: true,
+    drawWithTouch: false,
+    drawWithMouse: true,
+    fingerPanPreferred: true,
+    pinchZoom: true,
+    eraserDeletes: true,
+    palmRejection: true,
+    suppressBrowserGestures: true,
   });
 
   /* ── 低レベル helpers ──────────────────────────────────── */
@@ -101,12 +112,30 @@ const Storage = (() => {
     return settings;
   }
 
+  /* ── アプリ全体のペン/入力設定（セッション非依存） ─────── */
+  function getPenSettings() {
+    try {
+      const v = localStorage.getItem(PEN_SETTINGS_KEY);
+      const stored = v ? JSON.parse(v) : {};
+      return { ...DEFAULT_PEN_SETTINGS, ...(stored && typeof stored === 'object' ? stored : {}) };
+    } catch(e) {
+      return { ...DEFAULT_PEN_SETTINGS };
+    }
+  }
+
+  function setPenSetting(key, value) {
+    const settings = getPenSettings();
+    settings[key] = value;
+    try { localStorage.setItem(PEN_SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+    return settings;
+  }
+
   function clearAnnotationData() {
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || !k.startsWith(PREFIX)) continue;
-      if (k === DISPLAY_SETTINGS_KEY || k === BEHAVIOR_SETTINGS_KEY) continue;
+      if (k === DISPLAY_SETTINGS_KEY || k === BEHAVIOR_SETTINGS_KEY || k === PEN_SETTINGS_KEY) continue;
       keys.push(k);
     }
     keys.forEach(k => localStorage.removeItem(k));
@@ -256,7 +285,10 @@ const Storage = (() => {
     // app-wide display settings
     getDisplaySettings, setDisplaySetting,
     // app-wide behavior settings
-    getBehaviorSettings, setBehaviorSetting, clearAnnotationData, clearAllAppData,
+    getBehaviorSettings, setBehaviorSetting,
+    // app-wide pen/input settings
+    getPenSettings, setPenSetting,
+    clearAnnotationData, clearAllAppData,
     // session
     registerSession, getSessions, deleteSession,
     // colors
