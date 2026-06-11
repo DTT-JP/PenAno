@@ -40,10 +40,13 @@
       btnModeSelect:   $('btnModeSelect'),
       btnModeAdd:      $('btnModeAdd'),
       btnProgress:     $('btnProgress'),
+      progressDrawer:  $('progressDrawer'),
+      progressMini:    $('progressMini'),
 
       btnZoomReset:    $('btnZoomReset'),
       btnZoomCenter:   $('btnZoomCenter'),
       btnZoomPanel:    $('btnZoomPanel'),
+      zoomDrawer:      $('zoomDrawer'),
 
       labelList:       $('labelList'),
       btnObjPanel:     $('btnObjPanel'),
@@ -62,8 +65,6 @@
       annotSvg:        $('annotSvg'),
 
       flyoutOverlay:   $('flyoutOverlay'),
-      flyoutZoom:      $('flyoutZoom'),
-      flyoutProgress:  $('flyoutProgress'),
       flyoutObjects:   $('flyoutObjects'),
       flyoutOther:     $('flyoutOther'),
 
@@ -73,6 +74,7 @@
       btnZoomReset2:   $('btnZoomReset2'),
       btnZoomCenter2:  $('btnZoomCenter2'),
 
+      statCurrent:     $('statCurrent'),
       statTotal:       $('statTotal'),
       statDone:        $('statDone'),
       statLeft:        $('statLeft'),
@@ -111,18 +113,22 @@
   }
 
   // ─── Flyout System ─────────────────────────────────────────
-  const FLYOUTS = { zoom: {}, progress: {}, objects: {}, other: {} };
+  const FLYOUTS = { objects: {}, other: {} };
+  const SIDEBAR_DRAWERS = { zoom: {}, progress: {} };
   let _activeFlyout = null;
+  let _activeSidebarDrawer = null;
 
   function initFlyouts() {
-    FLYOUTS.zoom     = { panel: els.flyoutZoom,     btn: els.btnZoomPanel };
-    FLYOUTS.progress = { panel: els.flyoutProgress, btn: els.btnProgress };
     FLYOUTS.objects  = { panel: els.flyoutObjects,  btn: els.btnObjPanel };
     FLYOUTS.other    = { panel: els.flyoutOther,    btn: els.btnOtherMenu };
+    SIDEBAR_DRAWERS.zoom = { panel: els.zoomDrawer, btn: els.btnZoomPanel };
+    SIDEBAR_DRAWERS.progress = { panel: els.progressDrawer, btn: els.btnProgress };
   }
 
   function openFlyout(name) {
+    if (!FLYOUTS[name]) return;
     if (_activeFlyout === name) { closeFlyout(); return; }
+    closeSidebarDrawer();
     closeFlyout(false);
     _activeFlyout = name;
     FLYOUTS[name].panel.classList.add('open');
@@ -137,6 +143,27 @@
       _activeFlyout = null;
     }
     if (resetOverlay) els.flyoutOverlay.classList.remove('open');
+  }
+
+  function toggleSidebarDrawer(name, forceOpen) {
+    if (!SIDEBAR_DRAWERS[name]) return;
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : _activeSidebarDrawer !== name;
+    closeFlyout();
+    closeSidebarDrawer();
+    if (!shouldOpen) return;
+    _activeSidebarDrawer = name;
+    SIDEBAR_DRAWERS[name].panel.classList.add('open');
+    SIDEBAR_DRAWERS[name].panel.setAttribute('aria-hidden', 'false');
+    SIDEBAR_DRAWERS[name].btn.classList.add('open');
+  }
+
+  function closeSidebarDrawer() {
+    if (!_activeSidebarDrawer) return;
+    const drawer = SIDEBAR_DRAWERS[_activeSidebarDrawer];
+    drawer.panel.classList.remove('open');
+    drawer.panel.setAttribute('aria-hidden', 'true');
+    drawer.btn.classList.remove('open');
+    _activeSidebarDrawer = null;
   }
 
   // ─── Event Binding ─────────────────────────────────────────
@@ -161,8 +188,8 @@
     els.btnZoomReset.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
     els.btnZoomCenter.addEventListener('click', () => CanvasManager.centerImage());
 
-    els.btnZoomPanel.addEventListener('click', () => openFlyout('zoom'));
-    els.btnProgress.addEventListener('click', () => { updateProgressStats(); openFlyout('progress'); });
+    els.btnZoomPanel.addEventListener('click', () => toggleSidebarDrawer('zoom'));
+    els.btnProgress.addEventListener('click', () => { updateProgressStats(); toggleSidebarDrawer('progress'); });
     els.btnObjPanel.addEventListener('click', () => openFlyout('objects'));
     els.btnOtherMenu.addEventListener('click', () => { openFlyout('other'); });
 
@@ -177,6 +204,8 @@
     els.zoomInput.addEventListener('blur', onZoomInputChange);
     els.btnZoomReset2.addEventListener('click', () => updateZoomDisplay(CanvasManager.resetZoom()));
     els.btnZoomCenter2.addEventListener('click', () => CanvasManager.centerImage());
+
+    bindSidebarDrawerSwipe();
 
     els.btnAddLabel.addEventListener('click', () => {
       els.addLabelForm.classList.toggle('hidden');
@@ -200,6 +229,40 @@
     els.modalVersion.addEventListener('click', e => { if (e.target === els.modalVersion) closeVersionModal(); });
 
     try { initSettings(getAppCallbacks()); } catch(e) { console.error('initSettings:', e); }
+  }
+
+  function bindSidebarDrawerSwipe() {
+    const EDGE_GUARD_PX = 24;
+    const OPEN_DISTANCE_PX = 48;
+    const MAX_VERTICAL_DRIFT_PX = 34;
+    document.querySelectorAll('[data-sidebar-drawer]').forEach(row => {
+      let startX = 0;
+      let startY = 0;
+      let tracking = false;
+      row.addEventListener('touchstart', e => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        if (touch.clientX <= EDGE_GUARD_PX) return;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        tracking = true;
+      }, { passive: true });
+      row.addEventListener('touchmove', e => {
+        if (!tracking || e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        if (Math.abs(dy) > MAX_VERTICAL_DRIFT_PX) {
+          tracking = false;
+          return;
+        }
+        if (Math.abs(dx) < OPEN_DISTANCE_PX) return;
+        toggleSidebarDrawer(row.dataset.sidebarDrawer, dx > 0);
+        tracking = false;
+      }, { passive: true });
+      row.addEventListener('touchend', () => { tracking = false; }, { passive: true });
+      row.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+    });
   }
 
   /** settings.js に渡すコールバック群 */
@@ -463,9 +526,12 @@
     for (const file of DataManager.files) {
       if (confirmed.has(file.name)) doneCount++;
     }
+    const current = total > 0 ? DataManager.index() + 1 : 0;
+    els.statCurrent.textContent = current;
     els.statTotal.textContent = total;
     els.statDone.textContent = doneCount;
     els.statLeft.textContent = total - doneCount;
+    els.progressMini.textContent = `${doneCount}/${total}`;
   }
 
   // ─── Confirm ───────────────────────────────────────────────

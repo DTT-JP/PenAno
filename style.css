@@ -301,6 +301,56 @@ html, body {
   border-color: var(--accent); color: #fff;
 }
 
+
+
+/* Inline drawers inside the sidebar */
+.sidebar-drawer {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: max-height .22s cubic-bezier(.4,0,.2,1), opacity .18s, transform .18s, margin-top .18s;
+  margin-top: 0;
+  pointer-events: none;
+}
+.sidebar-drawer.open {
+  max-height: 180px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 8px;
+  pointer-events: auto;
+}
+.progress-mini {
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  max-width: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-progress-stats {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 0;
+}
+.sidebar-progress-stats .stat {
+  padding: 8px 4px;
+}
+.sidebar-progress-stats .stat-val {
+  font-size: 18px;
+}
+.zoom-drawer .zoom-row {
+  margin-bottom: 8px;
+}
+.zoom-drawer-actions {
+  display: flex;
+  gap: 6px;
+}
+.zoom-drawer-actions .view-btn {
+  min-height: 36px;
+}
+
 /* ─── Labels Section ───────────────────────────────────────── */
 .labels-header {
   display: flex; align-items: center;
