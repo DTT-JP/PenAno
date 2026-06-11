@@ -96,21 +96,18 @@
       <!-- 2. Confirm / Mode / Progress -->
       <div class="sb-section">
         <div class="action-row">
-          <!-- 確認 -->
           <button class="act-btn confirm-btn" id="btnConfirm" title="確認済みにする">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20,6 9,17 4,12"/>
             </svg>
             <span id="confirmLabel" style="font-size:10px;">確認</span>
           </button>
-          <!-- 選択 -->
           <button class="act-btn mode-btn active" id="btnModeSelect" title="選択モード">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 3l14 9-7 1-4 7z"/>
             </svg>
             <span style="font-size:10px;">選択</span>
           </button>
-          <!-- 追加 -->
           <button class="act-btn mode-btn" id="btnModeAdd" title="追加モード">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -119,7 +116,6 @@
             </svg>
             <span style="font-size:10px;">追加</span>
           </button>
-          <!-- 進捗 → -->
           <button class="act-btn expand-btn" id="btnProgress" title="進捗を表示">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="9"/>
@@ -150,7 +146,6 @@
             </svg>
             中心
           </button>
-          <!-- ズーム詳細 → -->
           <button class="view-btn expand-btn" id="btnZoomPanel" title="ズーム詳細">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
@@ -162,7 +157,7 @@
         </div>
       </div>
 
-      <!-- 4. Labels (flex:1, scrollable) -->
+      <!-- 4. Labels -->
       <div class="sb-section labels-section">
         <div class="labels-header">
           <span class="labels-title">ラベル一覧</span>
@@ -196,7 +191,7 @@
         </div>
       </div>
 
-      <!-- 5. Footer: Brand + その他 -->
+      <!-- 5. Footer -->
       <div class="sb-section footer-section">
         <div class="sb-footer">
           <div class="app-brand">
@@ -219,7 +214,7 @@
         </div>
       </div>
 
-    </aside><!-- /sidebar -->
+    </aside>
 
     <!-- ── Canvas ──────────────────────────────────────── -->
     <main id="canvasArea" class="canvas-area">
@@ -229,13 +224,11 @@
       </div>
     </main>
 
-  </div><!-- /app -->
+  </div>
 
   <!-- ═══════════════════════════════════════════════════════
        Fly-out Panels
   ════════════════════════════════════════════════════════ -->
-
-  <!-- Overlay (closes active flyout) -->
   <div id="flyoutOverlay" class="flyout-overlay"></div>
 
   <!-- Zoom Panel -->
@@ -294,16 +287,7 @@
     </div>
   </div>
 
-  <!-- Other Menu Panel -->
-  <!-- ═══════════════════════════════════════════════════════════
-     DIFF GUIDE: index.html の変更箇所
-     
-     1. flyoutOther の中身を下記に丸ごと置き換える
-     2. app.js に settingsPanel.js の initSettings() 呼び出しを追加
-     3. <script src="settings.js"></script> を app.js の前に追加
-     ════════════════════════════════════════════════════════════ -->
-
-  <!-- Other / Settings Panel — 2-column Apple Settings style -->
+  <!-- Settings Panel -->
   <div id="flyoutOther" class="flyout-panel">
     <div class="flyout-header">
       <span class="flyout-title">設定</span>
@@ -312,10 +296,9 @@
 
     <div class="settings-panel">
 
-      <!-- ── Left column: nav ─────────────────────────────── -->
+      <!-- ── Left nav ─────────────────────────────────────── -->
       <nav class="settings-nav" id="settingsNav">
 
-        <!-- アクション -->
         <span class="settings-nav-label">アクション</span>
 
         <button class="settings-nav-item active" data-pane="pane-save">
@@ -335,10 +318,8 @@
         </button>
 
         <div class="settings-nav-separator"></div>
-
-        <!-- 設定 -->
         <span class="settings-nav-label">設定</span>
-        
+
         <button class="settings-nav-item" data-pane="pane-display">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="3" width="20" height="14" rx="2"/>
@@ -366,7 +347,19 @@
 
         <div class="settings-nav-separator"></div>
 
-        <!-- アプリについて -->
+        <!-- ★ セッション管理 -->
+        <span class="settings-nav-label">データ管理</span>
+
+        <button class="settings-nav-item" data-pane="pane-sessions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          セッション管理
+        </button>
+
+        <div class="settings-nav-separator"></div>
         <span class="settings-nav-label">アプリ</span>
 
         <button class="settings-nav-item" data-pane="pane-about">
@@ -378,9 +371,9 @@
           バージョン情報
         </button>
 
-      </nav><!-- /settings-nav -->
+      </nav>
 
-      <!-- ── Right column: detail panes ───────────────────── -->
+      <!-- ── Right detail ──────────────────────────────────── -->
       <div class="settings-detail" id="settingsDetail">
 
         <!-- 保存 -->
@@ -415,15 +408,14 @@
               <path d="M19 6l-1 14H6L5 6"/>
               <path d="M10 11v6M14 11v6"/>
             </svg>
-            保存データを消去
+            すべての保存データを消去
           </button>
-          <p class="settings-desc">localStorageに保存されたアノテーション・確認フラグ・ラベルカラーをすべて削除します。</p>
+          <p class="settings-desc">localStorageに保存されたすべてのアノテーション・確認フラグ・ラベルカラーを削除します。</p>
         </div>
 
         <!-- 表示 -->
         <div class="settings-pane" id="pane-display">
           <p class="pane-title">表示設定</p>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">アノテーション表示</span>
@@ -435,7 +427,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">ラベル名を表示</span>
@@ -447,7 +438,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div style="height:10px;"></div>
           <p class="pane-title">塗りつぶし濃度</p>
           <div class="settings-segment" id="segmentFill">
@@ -460,7 +450,6 @@
         <!-- アノテーション -->
         <div class="settings-pane" id="pane-annotation">
           <p class="pane-title">矩形スタイル</p>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">角を丸める</span>
@@ -472,7 +461,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">描画後に選択</span>
@@ -484,7 +472,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div style="height:10px;"></div>
           <p class="pane-title">ハンドルサイズ</p>
           <div class="settings-segment" id="segmentHandle">
@@ -495,9 +482,8 @@
         </div>
 
         <!-- 入力 -->
-      <div class="settings-pane" id="pane-input">
+        <div class="settings-pane" id="pane-input">
           <p class="pane-title">ポインター設定</p>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">指でパン</span>
@@ -509,7 +495,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div class="settings-toggle-row">
             <div class="settings-toggle-label">
               <span class="tl-name">ピンチでズーム</span>
@@ -521,7 +506,6 @@
               <span class="ios-toggle-thumb"></span>
             </label>
           </div>
-
           <div style="height:10px;"></div>
           <p class="pane-title">最小矩形サイズ (px)</p>
           <div class="settings-segment" id="segmentMinSize">
@@ -530,6 +514,13 @@
             <button class="segment-option" data-val="8">8</button>
             <button class="segment-option" data-val="16">16</button>
           </div>
+        </div>
+
+        <!-- ★ セッション管理 -->
+        <div class="settings-pane" id="pane-sessions">
+          <p class="pane-title">保存済みセッション</p>
+          <p class="settings-desc" style="margin-bottom:10px;">フォルダ／ZIPを開くたびにセッションが作成されます。ラベルカラーをセッション間でコピーしたり、不要なデータを削除できます。</p>
+          <div id="sessionListContainer"></div>
         </div>
 
         <!-- バージョン情報 -->
@@ -547,7 +538,6 @@
             <span class="sir-label">リリース日</span>
             <span class="sir-value" id="settingsDateVal">—</span>
           </div>
-
           <div style="height:10px;"></div>
           <button class="settings-action-btn" id="btnVersionInfo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -594,7 +584,7 @@
   <script src="storage.js"></script>
   <script src="data.js"></script>
   <script src="canvas.js"></script>
-  <script src="app.js"></script>
   <script src="settings.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

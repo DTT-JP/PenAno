@@ -515,7 +515,8 @@ html, body {
   color: var(--text); font-size: 16px;
   font-weight: 700; text-align: center;
   padding: 8px 4px; font-family: var(--font);
-  min-width: 0; -moz-appearance: textfield;
+  min-width: 0; appearance: textfield;
+  -moz-appearance: textfield;
 }
 .zoom-input::-webkit-inner-spin-button,
 .zoom-input::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -909,3 +910,102 @@ html, body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Session Management Cards ─────────────────────────── */
+.session-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.session-card--current {
+  border-color: var(--accent);
+  background: var(--accent-fill);
+}
+
+.session-card-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.session-type-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.session-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.session-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  flex-shrink: 0;
+  letter-spacing: .03em;
+}
+.session-date {
+  font-size: 10px;
+  color: var(--text3);
+  padding-left: 22px;
+}
+
+.session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.session-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  text-align: left;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.session-action-btn:active {
+  background: var(--surface2);
+  color: var(--text);
+}
+.session-action-btn svg {
+  flex-shrink: 0;
+  opacity: .7;
+}
+.session-action-btn--danger {
+  color: var(--danger);
+  border-color: rgba(239,68,68,.3);
+}
+.session-action-btn--danger svg {
+  opacity: 1;
+  color: var(--danger);
+}
+.session-action-btn--danger:active {
+  background: rgba(239,68,68,.1);
+  border-color: var(--danger);
+}
