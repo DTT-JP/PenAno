@@ -370,15 +370,7 @@
         <!-- 保存 -->
         <div class="settings-pane active" id="pane-save">
           <p class="pane-title">保存</p>
-          <button class="settings-action-btn primary" id="btnDownloadZip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-              <polyline points="7,10 12,15 17,10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            ZIPで書き出す
-          </button>
-          <p class="settings-desc">編集済みのアノテーションをZIPファイルとしてダウンロードします。画像は含まれません。</p>
+          <p class="settings-desc">保存・書き出し機能は、メニュー内の data セクションに移動しました。</p>
         </div>
 
         <!-- 開く -->
@@ -571,7 +563,54 @@
         <div class="menu-content">
           <section class="menu-section active" id="menuSec-data" data-menu-panel="data">
             <h2>data</h2>
-            <p>Phase 04: セクション骨格</p>
+
+            <div class="menu-group">
+              <h3>保存</h3>
+              <p>LabelMe 形式のJSON、画像同梱ZIP、統計CSVを書き出します。</p>
+              <button class="menu-action-btn primary" id="btnDownloadZip">ZIP でダウンロード</button>
+              <button class="menu-action-btn" id="btnDownloadZipImages">画像を含めて ZIP でダウンロード</button>
+              <button class="menu-action-btn" id="btnDownloadStatsCsv">統計 CSV ダウンロード</button>
+            </div>
+
+            <div class="menu-group">
+              <h3>AI 書き出し</h3>
+              <label class="menu-field">
+                <span>フォーマット</span>
+                <select id="aiExportFormat">
+                  <option value="yolo">YOLO</option>
+                  <option value="coco">COCO</option>
+                </select>
+              </label>
+
+              <div class="menu-field menu-slider">
+                <span>train <strong id="splitTrainValue">70%</strong></span>
+                <input type="range" id="splitTrain" min="0" max="100" value="70">
+              </div>
+              <div class="menu-field menu-slider">
+                <span>val <strong id="splitValValue">20%</strong></span>
+                <input type="range" id="splitVal" min="0" max="100" value="20">
+              </div>
+              <div class="menu-field menu-slider">
+                <span>test <strong id="splitTestValue">10%</strong></span>
+                <input type="range" id="splitTest" min="0" max="100" value="10">
+              </div>
+
+              <div id="yoloDatasetOptions">
+                <label class="menu-field toggle-switch">
+                  <span>dataset.yaml を生成</span>
+                  <input type="checkbox" id="toggleDatasetYaml" checked>
+                </label>
+                <label class="menu-field">
+                  <span>dataset.yaml ルートパス</span>
+                  <input type="text" id="datasetYamlRoot" value="." placeholder="例: /datasets/my_project">
+                </label>
+              </div>
+
+              <div class="menu-actions-row">
+                <button class="menu-action-btn" id="btnOpenClassId">クラス ID を確認</button>
+                <button class="menu-action-btn primary" id="btnExportAiDataset">AI データセットを書き出す</button>
+              </div>
+            </div>
           </section>
           <section class="menu-section" id="menuSec-session" data-menu-panel="session">
             <h2>session</h2>
@@ -601,6 +640,23 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       Class ID Modal
+  ════════════════════════════════════════════════════════ -->
+  <div id="modalClassId" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card class-id-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalClassIdTitle">
+      <div class="modal-header">
+        <span class="modal-title" id="modalClassIdTitle">クラス ID 確認</span>
+        <button class="modal-close" id="btnCloseClassId" title="閉じる" aria-label="閉じる">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="class-id-note">クラスIDはラベル名の昇順で固定されます。</p>
+        <div id="classIdList" class="class-id-list"></div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ═══════════════════════════════════════════════════════
        Version Modal

@@ -82,6 +82,23 @@
       objectList:      $('objectList'),
 
       btnDownloadZip:  $('btnDownloadZip'),
+      btnDownloadZipImages: $('btnDownloadZipImages'),
+      btnDownloadStatsCsv: $('btnDownloadStatsCsv'),
+      aiExportFormat:  $('aiExportFormat'),
+      splitTrain:      $('splitTrain'),
+      splitVal:        $('splitVal'),
+      splitTest:       $('splitTest'),
+      splitTrainValue: $('splitTrainValue'),
+      splitValValue:   $('splitValValue'),
+      splitTestValue:  $('splitTestValue'),
+      yoloDatasetOptions: $('yoloDatasetOptions'),
+      toggleDatasetYaml: $('toggleDatasetYaml'),
+      datasetYamlRoot: $('datasetYamlRoot'),
+      btnOpenClassId:  $('btnOpenClassId'),
+      btnExportAiDataset: $('btnExportAiDataset'),
+      modalClassId:    $('modalClassId'),
+      btnCloseClassId: $('btnCloseClassId'),
+      classIdList:     $('classIdList'),
       btnReload:       $('btnReload'),
       btnVersionInfo:  $('btnVersionInfo'),
 
@@ -222,7 +239,13 @@
       if (e.key === 'Escape') { els.addLabelForm.classList.add('hidden'); els.newLabelInput.value = ''; }
     });
 
-    els.btnDownloadZip.addEventListener('click', () => { closeFlyout(); onDownloadZip(); });
+    els.btnDownloadZip.addEventListener('click', () => { closeMenuModal(); onDownloadZip(false); });
+    els.btnDownloadZipImages.addEventListener('click', () => { closeMenuModal(); onDownloadZip(true); });
+    els.btnDownloadStatsCsv.addEventListener('click', () => { closeMenuModal(); onDownloadStatsCsv(); });
+    els.aiExportFormat.addEventListener('change', updateAiFormatOptions);
+    els.btnOpenClassId.addEventListener('click', openClassIdModal);
+    els.btnExportAiDataset.addEventListener('click', () => { closeMenuModal(); onExportAiDataset(); });
+    bindSplitSliders();
     els.btnReload.addEventListener('click', () => { closeFlyout(); showLoadScreen(); });
     els.btnVersionInfo.addEventListener('click', () => { closeFlyout(); showVersionModal(); });
 
@@ -230,6 +253,11 @@
 
     els.btnCloseModal.addEventListener('click', closeVersionModal);
     els.modalVersion.addEventListener('click', e => { if (e.target === els.modalVersion) closeVersionModal(); });
+    els.btnCloseClassId.addEventListener('click', closeClassIdModal);
+    els.modalClassId.addEventListener('click', e => { if (e.target === els.modalClassId) closeClassIdModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && els.modalClassId.classList.contains('open')) closeClassIdModal();
+    });
 
     try { initSettings(getAppCallbacks()); } catch(e) { console.error('initSettings:', e); }
   }
@@ -247,6 +275,7 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && els.modalMenu.classList.contains('open')) {
         closeMenuModal();
+        closeClassIdModal();
       }
     });
   }
@@ -279,6 +308,93 @@
       section.classList.toggle('active', section === targetPanel);
     });
   }
+
+  function bindSplitSliders() {
+    const sliders = [els.splitTrain, els.splitVal, els.splitTest];
+    sliders.forEach(slider => {
+      slider.addEventListener('input', () => {
+        normalizeSplitRatios(slider.id);
+        updateSplitLabels();
+      });
+    });
+    normalizeSplitRatios('splitTrain');
+    updateSplitLabels();
+    updateAiFormatOptions();
+  }
+
+  function normalizeSplitRatios(changedId) {
+    const values = {
+      splitTrain: Number(els.splitTrain.value),
+      splitVal: Number(els.splitVal.value),
+      splitTest: Number(els.splitTest.value),
+    };
+    const changed = changedId || 'splitTrain';
+    values[changed] = clampPercent(values[changed]);
+    const others = ['splitTrain', 'splitVal', 'splitTest'].filter(id => id !== changed);
+    const remaining = 100 - values[changed];
+    const otherTotal = others.reduce((sum, id) => sum + clampPercent(values[id]), 0);
+    if (otherTotal <= 0) {
+      values[others[0]] = remaining;
+      values[others[1]] = 0;
+    } else {
+      values[others[0]] = Math.round(remaining * clampPercent(values[others[0]]) / otherTotal);
+      values[others[1]] = remaining - values[others[0]];
+    }
+    els.splitTrain.value = values.splitTrain;
+    els.splitVal.value = values.splitVal;
+    els.splitTest.value = values.splitTest;
+  }
+
+  function clampPercent(value) {
+    return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+  }
+
+  function updateSplitLabels() {
+    els.splitTrainValue.textContent = `${els.splitTrain.value}%`;
+    els.splitValValue.textContent = `${els.splitVal.value}%`;
+    els.splitTestValue.textContent = `${els.splitTest.value}%`;
+  }
+
+  function getSplitRatios() {
+    normalizeSplitRatios('splitTrain');
+    updateSplitLabels();
+    return { train: Number(els.splitTrain.value), val: Number(els.splitVal.value), test: Number(els.splitTest.value) };
+  }
+
+  function updateAiFormatOptions() {
+    els.yoloDatasetOptions.classList.toggle('hidden', els.aiExportFormat.value !== 'yolo');
+  }
+
+  function openClassIdModal() {
+    renderClassIdList();
+    els.modalClassId.classList.add('open');
+    els.modalClassId.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeClassIdModal() {
+    els.modalClassId.classList.remove('open');
+    els.modalClassId.setAttribute('aria-hidden', 'true');
+  }
+
+  function renderClassIdList() {
+    const labels = DataManager.collectAllLabels();
+    els.classIdList.innerHTML = '';
+    if (!labels.length) {
+      els.classIdList.innerHTML = '<p>ラベルがありません。</p>';
+      return;
+    }
+    labels.forEach((label, idx) => {
+      const row = document.createElement('div');
+      row.className = 'class-id-row';
+      row.innerHTML = `<span class="class-id-num">${idx}</span><span>${escapeHtml(label)}</span>`;
+      els.classIdList.appendChild(row);
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  }
+
 
   function bindSidebarDrawerSwipe() {
     const EDGE_GUARD_PX = 24;
@@ -693,8 +809,8 @@
 
   function closeVersionModal() { els.modalVersion.classList.remove('open'); }
 
-  // ─── Download ZIP ──────────────────────────────────────────
-  async function onDownloadZip() {
+  // ─── Downloads / Dataset Export ────────────────────────────
+  async function onDownloadZip(includeImages = false) {
     const zip = new JSZip();
     let hasData = false;
     for (const file of DataManager.files) {
@@ -703,17 +819,45 @@
         zip.file(base + '.json', JSON.stringify(file.json, null, 2));
         hasData = true;
       }
+      if (includeImages && file.imageBlob) {
+        zip.file('images/' + file.name, file.imageBlob);
+        hasData = true;
+      }
     }
     if (!hasData) { alert('保存するデータがありません。'); return; }
     try {
       const content = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
-      const url = URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'annotations.zip';
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(content, includeImages ? 'annotations_with_images.zip' : 'annotations.zip');
     } catch(err) { console.error(err); alert('ZIPの作成に失敗しました。'); }
+  }
+
+  function onDownloadStatsCsv() {
+    const csv = DataManager.exportStatsCsv();
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'annotation_stats.csv');
+  }
+
+  async function onExportAiDataset() {
+    if (DataManager.count() === 0) { alert('書き出すデータがありません。'); return; }
+    const format = els.aiExportFormat.value;
+    const options = {
+      ratios: getSplitRatios(),
+      includeDatasetYaml: format === 'yolo' && els.toggleDatasetYaml.checked,
+      rootPath: els.datasetYamlRoot.value.trim() || '.',
+    };
+    try {
+      const result = format === 'coco' ? DataManager.exportCoco(options) : DataManager.exportYolo(options);
+      const content = await result.zip.generateAsync({ type: 'blob', compression: 'STORE' });
+      downloadBlob(content, format === 'coco' ? 'coco_dataset.zip' : 'yolo_dataset.zip');
+    } catch(err) { console.error(err); alert('AIデータセットの作成に失敗しました。'); }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   // ─── Reload ────────────────────────────────────────────────
