@@ -535,6 +535,7 @@
         const shapes = DataManager.getShapes(file);
         CanvasManager.setShapes(shapes, _labelColors);
         CanvasManager.setSelectedIdx(shapes.length - 1);
+        CanvasManager.setJustAdded(true);
         renderObjectList(shapes);
         break;
       }
