@@ -1,7 +1,13 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /* ui/objectList.js - オブジェクトリスト UI */
 
-function renderObjectList(shapes) {
+import { _labelColors } from '../state.js';
+
+export function renderObjectList(shapes) {
+    const els = {
+      objectList: document.getElementById('objectList'),
+      objCount: document.getElementById('objCount'),
+    };
     els.objectList.innerHTML = '';
     els.objCount.textContent = shapes ? shapes.length : 0;
     if (!shapes) return;
@@ -30,7 +36,7 @@ function renderObjectList(shapes) {
     }
   }
 
-function deleteObject(idx) {
+export function deleteObject(idx) {
     const file = DataManager.current();
     if (!file) return;
     DataManager.removeShape(file, idx);

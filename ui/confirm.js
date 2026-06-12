@@ -1,7 +1,9 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /* ui/confirm.js - 確認ボタン処理 */
 
-function toggleConfirm() {
+import { updateProgressStats } from './progress.js';
+
+export function toggleConfirm() {
     const file = DataManager.current();
     if (!file) return;
     const sid = DataManager.getSessionId();
@@ -11,7 +13,11 @@ function toggleConfirm() {
     updateProgressStats();
   }
 
-function updateConfirmButton(filename, sid) {
+export function updateConfirmButton(filename, sid) {
+    const els = {
+      btnConfirm: document.getElementById('btnConfirm'),
+      confirmLabel: document.getElementById('confirmLabel'),
+    };
     const confirmed = sid ? Storage.isConfirmed(sid, filename) : false;
     if (confirmed) {
       els.btnConfirm.classList.add('confirmed');

@@ -1,7 +1,13 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /* ui/labelList.js - ラベルリスト UI */
 
-function renderLabelList() {
+import { _labels, _labelColors, _activeLabel, setLabels, setActiveLabel } from '../state.js';
+import { renderObjectList } from './objectList.js';
+
+export function renderLabelList() {
+    const els = {
+      labelList: document.getElementById('labelList'),
+    };
     els.labelList.innerHTML = '';
     for (const label of _labels) {
       const color = _labelColors[label] || '#2563eb';
@@ -46,8 +52,8 @@ function renderLabelList() {
     }
   }
 
-function onLabelItemClick(label) {
-    _activeLabel = label;
+export function onLabelItemClick(label) {
+    setActiveLabel(label);
     const mode = CanvasManager.getMode();
     const selIdx = CanvasManager.getSelectedIdx();
     if (mode === 'select' && selIdx >= 0) {
@@ -65,7 +71,12 @@ function onLabelItemClick(label) {
     renderLabelList();
   }
 
-function onAddLabel() {
+export function onAddLabel() {
+    const els = {
+      newLabelInput: document.getElementById('newLabelInput'),
+      newLabelColor: document.getElementById('newLabelColor'),
+      addLabelForm: document.getElementById('addLabelForm'),
+    };
     const name = els.newLabelInput.value.trim();
     if (!name) return;
     if (_labels.includes(name)) { alert('このラベルは既に存在します。'); return; }
@@ -75,14 +86,14 @@ function onAddLabel() {
     _labelColors[name] = color;
     const sid = DataManager.getSessionId();
     if (sid) Storage.setLabelColor(sid, name, color);
-    _activeLabel = name;
+    setActiveLabel(name);
     els.newLabelInput.value = '';
     els.addLabelForm.classList.add('hidden');
     renderLabelList();
     CanvasManager.setLabelColors(_labelColors);
   }
 
-function deleteLabel(label) {
+export function deleteLabel(label) {
     if (!confirm(`ラベル「${label}」を削除しますか？\nこのラベルを持つ全てのオブジェクトも削除されます。`)) return;
     const sid = DataManager.getSessionId();
     for (const file of DataManager.files) {
@@ -94,10 +105,10 @@ function deleteLabel(label) {
         if (sid) Storage.saveJson(sid, file.name, file.json);
       }
     }
-    _labels = _labels.filter(l => l !== label);
+    setLabels(_labels.filter(l => l !== label));
     delete _labelColors[label];
     if (sid) Storage.removeLabelColor(sid, label);
-    if (_activeLabel === label) _activeLabel = _labels.length > 0 ? _labels[0] : null;
+    if (_activeLabel === label) setActiveLabel(_labels.length > 0 ? _labels[0] : null);
     renderLabelList();
     const file = DataManager.current();
     if (file) {

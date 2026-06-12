@@ -1,8 +1,12 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /* state.js - アプリケーション状態変数 */
 
-let _labels = [];
+export let _labels = [];
 
-let _labelColors = {};
+export let _labelColors = {};
 
-let _activeLabel = null;
+export let _activeLabel = null;
+
+export function setLabels(newLabels) { _labels = newLabels; }
+export function setLabelColors(newColors) { _labelColors = newColors; }
+export function setActiveLabel(newLabel) { _activeLabel = newLabel; }
