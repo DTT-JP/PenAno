@@ -1,6 +1,6 @@
 {
   "name": "penano",
-  "version": "1.0.0",
+  "version": "0.0.0-dev-es",
   "description": "<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->\r # PenAno",
   "main": "main.js",
   "directories": {
