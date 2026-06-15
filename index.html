@@ -3,16 +3,15 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="icons/icon-192.png" type="image/x-icon">
+  <link rel="icon" href="/icons/icon-192.png" type="image/x-icon">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PenAno">
   <meta name="theme-color" content="#0d0d14">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <title>PenAno</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
 
@@ -347,8 +346,6 @@
         </button>
 
         <div class="settings-nav-separator"></div>
-
-        <!-- ★ セッション管理 -->
         <span class="settings-nav-label">データ管理</span>
 
         <button class="settings-nav-item" data-pane="pane-sessions">
@@ -517,7 +514,7 @@
           </div>
         </div>
 
-        <!-- ★ セッション管理 -->
+        <!-- セッション管理 -->
         <div class="settings-pane" id="pane-sessions">
           <p class="pane-title">保存済みセッション</p>
           <p class="settings-desc" style="margin-bottom:10px;">フォルダ／ZIPを開くたびにセッションが作成されます。ラベルカラーをセッション間でコピーしたり、不要なデータを削除できます。</p>
@@ -578,14 +575,7 @@
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="lib/jszip.min.js"></script>
-  <script src="lib/marked.min.js"></script>
-  <script src="version.js"></script>
-  <script src="storage.js"></script>
-  <script src="data.js"></script>
-  <script src="canvas.js"></script>
-  <script src="settings.js"></script>
-  <script type="module" src="main.js"></script>
+  <!-- Vite エントリーポイント -->
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

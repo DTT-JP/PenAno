@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  root: '.',
   build: {
     outDir: 'dist',
   },
@@ -10,6 +11,7 @@ export default defineConfig({
     VitePWA({
       strategies: 'generateSW',
       registerType: 'autoUpdate',
+      injectRegister: false, // main.js で手動登録するため無効化
 
       manifest: {
         name: 'PenAno',
@@ -37,11 +39,10 @@ export default defineConfig({
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png}'],
-
+        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
         runtimeCaching: [
           {
-            // CHANGELOG/以下のMarkdownはネットワーク優先（リリースノート等を最新化）
+            // CHANGELOG以下のMarkdownはネットワーク優先
             urlPattern: /\/CHANGELOG\/.+\.md/,
             handler: 'NetworkFirst',
             options: {
