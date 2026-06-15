@@ -5,19 +5,15 @@
 # 使い方（プロジェクトルートから実行）:
 #   .\tools\rename-to-ts.ps1 src/storage.js
 #   .\tools\rename-to-ts.ps1 src/ui/labelList.js
-#
-# 型付け済みのコードを .js ファイルに上書きしてから、このスクリプトを実行する。
 # =============================================================================
-
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-
-# ── 引数チェック ──────────────────────────────────────────────────────────
 
 param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string]$FilePath
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
 $Root = (Get-Location).Path
 
@@ -25,18 +21,15 @@ function Write-Step([string]$msg) {
     Write-Host ""
     Write-Host "==> $msg" -ForegroundColor Cyan
 }
-
 function Write-Ok([string]$msg) {
     Write-Host "    [OK] $msg" -ForegroundColor Green
 }
-
 function Write-Fail([string]$msg) {
     Write-Host "    [FAIL] $msg" -ForegroundColor Red
 }
 
 # ── パス解決 ──────────────────────────────────────────────────────────────
 
-# スラッシュ／バックスラッシュどちらでも受け付ける
 $FilePath = $FilePath -replace "/", "\"
 $AbsPath  = if ([System.IO.Path]::IsPathRooted($FilePath)) {
     $FilePath
@@ -46,13 +39,10 @@ $AbsPath  = if ([System.IO.Path]::IsPathRooted($FilePath)) {
 
 Write-Step "対象ファイル: $AbsPath"
 
-# ── 存在チェック ──────────────────────────────────────────────────────────
-
 if (-not (Test-Path $AbsPath)) {
     Write-Fail "ファイルが見つかりません: $AbsPath"
     exit 1
 }
-
 if (-not $AbsPath.EndsWith(".js")) {
     Write-Fail "拡張子が .js ではありません: $AbsPath"
     exit 1
@@ -71,7 +61,7 @@ if (Test-Path $TsPath) {
 }
 
 Rename-Item -Path $AbsPath -NewName ([System.IO.Path]::GetFileName($TsPath))
-Write-Ok "$([System.IO.Path]::GetFileName($AbsPath)) → $([System.IO.Path]::GetFileName($TsPath)) リネーム完了"
+Write-Ok "$([System.IO.Path]::GetFileName($AbsPath)) -> $([System.IO.Path]::GetFileName($TsPath)) リネーム完了"
 
 # ── tsc --noEmit で確認 ────────────────────────────────────────────────
 
@@ -80,15 +70,20 @@ Write-Step "tsc --noEmit でエラー確認"
 Write-Host ""
 Write-Host "---- tsc 出力 ここから ----" -ForegroundColor DarkGray
 
-$TscOutput = & npx tsc --noEmit 2>&1
-# このファイルに関連するエラーだけ抽出
-$RelTsPath   = $TsPath.Replace($Root + "\", "").Replace("\", "/")
-$ThisErrors  = $TscOutput | Where-Object { $_ -match [regex]::Escape($RelTsPath) -or $_ -match "error TS" }
-$ErrorCount  = ($TscOutput | Where-Object { $_ -match "error TS" }).Count
-$ThisErrCount= ($TscOutput | Where-Object { $_ -match [regex]::Escape($RelTsPath) }).Count
+$TscRaw    = & npx tsc --noEmit 2>&1
+# 必ず配列として扱う
+$TscLines  = @($TscRaw | ForEach-Object { "$_" })
 
-# 全出力
-Write-Host ($TscOutput -join "`n") -ForegroundColor DarkGray
+$ErrorCount   = @($TscLines | Where-Object { $_ -match "error TS" }).Count
+$RelTsPath    = $TsPath.Replace($Root + "\", "").Replace("\", "/")
+$ThisErrCount = @($TscLines | Where-Object { $_ -match [regex]::Escape($RelTsPath) }).Count
+
+if ($TscLines.Count -gt 0) {
+    Write-Host ($TscLines -join "`n") -ForegroundColor DarkGray
+} else {
+    Write-Host "（出力なし）" -ForegroundColor DarkGray
+}
+
 Write-Host "---- tsc 出力 ここまで ----" -ForegroundColor DarkGray
 Write-Host ""
 
