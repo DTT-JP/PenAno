@@ -1,6 +1,6 @@
 {
   "name": "penano",
-  "version": "0.0.0-dev-es",
+  "version": "0.0.0-dev-p4",
   "description": "<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->\r # PenAno",
   "main": "main.js",
   "directories": {
@@ -24,9 +24,10 @@
   },
   "homepage": "https://github.com/DTT-JP/PenAno#readme",
   "devDependencies": {
-    "vite": "^8.0.16",
-    "vite-plugin-pwa": "^1.3.0",
     "jszip": "^3.10.1",
-    "marked": "^16.0.0"
+    "marked": "^16.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-pwa": "^1.3.0"
   }
 }

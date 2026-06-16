@@ -1,21 +1,25 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
- * settings.js – 設定パネルのナビゲーション・トグル管理
+ * settings.ts – 設定パネルのナビゲーション・トグル管理
  */
-import Storage from './storage.js';
+import Storage from './storage';
+import type { AppCallbacks } from './types/app';
 
-export function initSettings(callbacks) {
-  const cb = callbacks || {};
+type ToastElement = HTMLDivElement & { _hideTimer?: ReturnType<typeof setTimeout> };
+
+export function initSettings(callbacks: AppCallbacks): void {
+  const cb = callbacks;
   const nav = document.getElementById('settingsNav');
   const detail = document.getElementById('settingsDetail');
   if (!nav || !detail) return;
 
-  nav.querySelectorAll('.settings-nav-item[data-pane]').forEach(btn => {
+  nav.querySelectorAll<HTMLElement>('.settings-nav-item[data-pane]').forEach(btn => {
     btn.addEventListener('click', () => {
       const paneId = btn.dataset.pane;
-      nav.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+      if (!paneId) return;
+      nav.querySelectorAll<HTMLElement>('.settings-nav-item').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      detail.querySelectorAll('.settings-pane').forEach(p => p.classList.remove('active'));
+      detail.querySelectorAll<HTMLElement>('.settings-pane').forEach(p => p.classList.remove('active'));
       const target = document.getElementById(paneId);
       if (target) target.classList.add('active');
 
@@ -23,10 +27,10 @@ export function initSettings(callbacks) {
     });
   });
 
-  detail.querySelectorAll('.settings-segment').forEach(seg => {
-    seg.querySelectorAll('.segment-option').forEach(opt => {
+  detail.querySelectorAll<HTMLElement>('.settings-segment').forEach(seg => {
+    seg.querySelectorAll<HTMLElement>('.segment-option').forEach(opt => {
       opt.addEventListener('click', () => {
-        seg.querySelectorAll('.segment-option').forEach(o => o.classList.remove('active'));
+        seg.querySelectorAll<HTMLElement>('.segment-option').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
       });
     });
@@ -37,7 +41,7 @@ export function initSettings(callbacks) {
     btnClear.addEventListener('click', () => {
       if (!confirm('localStorageに保存されたすべてのアノテーションデータ・確認フラグ・ラベルカラーを削除しますか？\nこの操作は取り消せません。')) return;
       try {
-        const keys = [];
+        const keys: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
           if (k && k.startsWith('lme_')) keys.push(k);
@@ -50,7 +54,7 @@ export function initSettings(callbacks) {
   }
 }
 
-function renderSessionList(cb) {
+function renderSessionList(cb: AppCallbacks): void {
   const container = document.getElementById('sessionListContainer');
   if (!container) return;
 
@@ -165,10 +169,10 @@ function renderSessionList(cb) {
   }
 }
 
-export function showToast(msg) {
-  let toast = document.getElementById('appToast');
+export function showToast(msg: string): void {
+  let toast = document.getElementById('appToast') as ToastElement | null;
   if (!toast) {
-    toast = document.createElement('div');
+    toast = document.createElement('div') as ToastElement;
     toast.id = 'appToast';
     toast.style.cssText = `
       position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -188,13 +192,14 @@ export function showToast(msg) {
   toast.style.opacity = '0';
   toast.style.transform = 'translateX(-50%) translateY(20px)';
   requestAnimationFrame(() => {
-    toast.style.transition = 'opacity .2s, transform .2s';
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-    clearTimeout(toast._hideTimer);
-    toast._hideTimer = setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(-50%) translateY(10px)';
+    const t = toast as ToastElement;
+    t.style.transition = 'opacity .2s, transform .2s';
+    t.style.opacity = '1';
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translateX(-50%) translateY(10px)';
     }, 2200);
   });
 }
