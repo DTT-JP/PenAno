@@ -1,8 +1,13 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
- * version.js – アプリバージョン定義
+ * version.ts – アプリバージョン定義
  */
-export const APP_VERSION = {
+export const APP_VERSION: {
+  version: string;
+  date: string;
+  docFile: string;
+  githubRepo: string;
+} = {
   version: '0.0.0-dev-es',
   date: '2026-06-11',
   docFile: 'CHANGELOG/v0-0-0.md',

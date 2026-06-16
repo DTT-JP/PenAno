@@ -1,226 +1,217 @@
-<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->
 # PenAno
 
-iPad + Apple Pencil 対応のローカルアノテーションエディタです。  
-Safari ブラウザ内で LabelMe (JSON) 形式のラベリングデータの **表示・編集・新規作成** を行えます。  
-**PWA対応** により、ホーム画面への追加・オフライン利用も可能です。
+> **English version:** [README.en.md](./lang/README.en.md)
 
-🔗 **https://penano.dttjp.com/**
-
-> **すべてのデータはローカルで処理されます。画像やJSONがインターネットに送信されることはありません。**
+タブレット端末向け Web アノテーションツール。ブラウザ上で画像を開き、LabelMe 形式の矩形アノテーションを作成・編集・エクスポートできます。インストール不要で動作し、PWA としてインストールも可能です。
 
 ---
 
-## ✨ 機能一覧
+## 機能
 
-### データ読み込み
-- **フォルダ読み込み** – 画像 (jpg/jpeg/png/bmp/webp/gif) と対応する LabelMe JSON をまとめて読み込み
-- **ZIPファイル読み込み** – ZIP に含まれる画像と JSON を展開して読み込み
-- 画像名ベースで自動マッチング（例: `photo.jpg` ↔ `photo.json`）
-
-### アノテーション表示
-- ラベリング済みオブジェクトを **縁取り + 半透明塗りつぶし** で表示
-- ラベルごとに色を指定可能（localStorageで保存）
-
-### 編集機能
-- **選択モード** – オブジェクトを選択・移動・リサイズ
-  - 8ハンドル（四隅+四辺中央）でサイズ変更
-  - ラベル一覧タップで選択中オブジェクトのラベルを変更
-- **追加モード** – ペンで斜めにドラッグして新しい矩形を作成
-  - ラベル一覧でアクティブなラベル（青色強調）で追加
-
-### 左サイドバー（常時表示）
-
-```
-[ ← ファイル名 → ]
-[ 確認 ][ 選択 ][ 追加 ][ 進捗→ ]
-[ 100% ][ 中心 ][ ズーム→ ]
-[ ラベル一覧 ]   [ オブジェクト→ ]
-（ラベルリスト）
-[ PenAno ロゴ ]  [ 設定→ ]
-```
-
-横展開パネル（ボタン押下で右へスライド表示）：
-- **進捗→** – 全枚数・確認済・残り枚数
-- **ズーム→** – +/− ボタン・数値入力・100%・中心
-- **オブジェクト→** – 現在画像のオブジェクト一覧・削除
-- **設定→** – 保存・データを開く・表示設定・バージョン情報
-
-### ラベル操作
-- ラベル一覧アイテムをタップ → そのラベルをアクティブ化（追加時に使用）
-- **選択モード中** にラベルタップ → 選択中オブジェクトのラベルを変更
-- アクティブラベルは青色・太字で強調表示
-- カラースウォッチをタップ → カラーピッカーで色変更
-
-### PWA
-- ホーム画面に追加することでネイティブアプリのように起動
-- オフライン利用可能（一度読み込んだアセットをキャッシュ）
-- iOS Safari: 共有ボタン → ホーム画面に追加
+- フォルダまたは ZIP ファイルから画像を一括読み込み
+- 矩形アノテーションの描画・移動・リサイズ・削除
+- LabelMe JSON 形式での保存・エクスポート
+- ラベルカラーのカスタマイズ
+- セッション管理（LocalStorage に自動保存）
+- ピンチズーム・パン操作（タブレット / Apple Pencil 対応）
+- PWA 対応（オフライン動作・ホーム画面へのインストール）
 
 ---
 
-## 📱 iPad + Apple Pencil 操作
+## 動作環境
 
-| 操作 | 指 (タッチ) | Apple Pencil |
-|------|------------|-------------|
-| 画像移動 | ドラッグ | — |
-| 拡大縮小 | ピンチ | — |
-| 選択モード: オブジェクト選択 | — | タップ |
-| 選択モード: 移動 | — | ドラッグ |
-| 選択モード: リサイズ | — | ハンドルをドラッグ |
-| 追加モード: 矩形作成 | — | 斜めにドラッグ |
+| 環境 | 備考 |
+|------|------|
+| Chrome / Edge（最新版） | 推奨 |
+| Safari（iOS 16 以上） | タブレット・iPhone |
+| Firefox（最新版） | 動作確認済み |
+
+インターネット接続不要（初回読み込み後はオフラインで動作）
 
 ---
 
-## 🚀 使い方
+## 公開版
+
+**https://penano.dttjp.com**
+
+上記 URL をブラウザで開くだけで、インストール不要ですぐに使えます。
+
+---
+
+## 使い方
 
 ### 1. アプリを開く
 
-**https://penano.dttjp.com/** をiPadのSafariで開きます。
+公開版（https://penano.dttjp.com）またはセルフホスト版の URL をブラウザで開きます。
 
-**PWAとしてインストール（推奨）:**
-1. Safari で上記URLを開く
-2. 画面下部の共有ボタン（□に↑）をタップ
-3. 「ホーム画面に追加」を選択
+### 2. 画像を読み込む
 
-インストール後はオフラインでも利用できます。
+起動後のロード画面で以下のいずれかを選択します。
 
-### 2. データを読み込む
+- **フォルダを選択** — 画像が入ったフォルダをまとめて選択
+- **ZIP を選択** — 画像をまとめた ZIP ファイルを選択
 
-- **「フォルダを開く」** をタップして画像とJSONが入ったフォルダを選択
-- **「ZIPファイルを開く」** をタップしてZIPファイルを選択
+対応画像形式: `jpg` / `jpeg` / `png` / `bmp` / `webp` / `gif`
 
-### 3. 編集する
+フォルダ内に同名の `.json` ファイルがある場合、既存アノテーションとして読み込みます。
 
-1. ラベル一覧からラベルをタップしてアクティブ化
-2. **追加モード**でペンを使って矩形を描画
-3. **選択モード**でオブジェクトをタップして選択・移動・リサイズ
-4. 選択中に別のラベルをタップするとラベル変更
-5. 確認済みにしたい画像は「確認」ボタンをタップ
+### 3. アノテーションを作成する
 
-### 4. 保存する
+| 操作 | 方法 |
+|------|------|
+| モード切替 | 画面上部の「選択」「追加」ボタン |
+| 矩形を描く | 追加モードでドラッグ（マウス / Apple Pencil） |
+| 矩形を選択 | 選択モードでタップ |
+| 移動 | 選択後にドラッグ |
+| リサイズ | 選択後、ハンドルをドラッグ |
+| 削除 | オブジェクトリストの「×」ボタン |
+| ズーム | ピンチ操作またはズームパネル |
 
-**設定 → 保存 → ZIPで書き出す** からアノテーションJSONをまとめてダウンロードできます。
+### 4. ラベルを管理する
+
+- 左パネルのラベルリストからラベルを選択してアノテーションに割り当て
+- 「＋」ボタンで新しいラベルを追加
+- カラースウォッチをタップして色を変更
+- 「×」ボタンでラベルと紐づくアノテーションを一括削除
+
+### 5. エクスポートする
+
+「その他」メニュー →「ZIP をダウンロード」で全アノテーション JSON を ZIP 形式でダウンロードします。
 
 ---
 
-## 📁 ファイル構成
+## ファイル構成
 
 ```
 PenAno/
-├── index.html          # メインHTML
-├── style.css           # スタイル定義（青テーマ）
-├── version.js          # バージョン定義（リリース時に更新）
-├── app.js              # アプリケーションメインロジック
-├── canvas.js           # 画像描画・アノテーション・ポインタ/タッチ操作
-├── data.js             # ファイル読み込み・LabelMe JSON管理
-├── storage.js          # ローカル永続化（localStorage）
-├── settings.js         # 設定パネルのナビゲーション・トグル管理
-├── manifest.json       # PWAマニフェスト
-├── sw.js               # Service Worker（オフライン対応）
-├── icons/
-│   ├── icon-192.png    # PWAアイコン 192x192
-│   └── icon-512.png    # PWAアイコン 512x512
-├── lib/
-│   ├── jszip.min.js    # ZIP展開ライブラリ
-│   └── marked.min.js   # Markdownレンダリングライブラリ
-└── doc/
-    ├── CHANGELOG.md    # 全バージョンの変更履歴（GitHub用）
-    └── v0-0-0.md       # 開発メモ / 現在の機能（アプリ内表示用）
+├── index.html                  # エントリーポイント
+├── vite.config.ts              # Vite 設定
+├── tsconfig.json               # TypeScript 設定
+├── package.json
+├── src/
+│   ├── main.ts                 # メインロジック
+│   ├── canvas.ts               # 画像表示・アノテーション描画
+│   ├── data.ts                 # ファイル読み込み・JSON管理
+│   ├── storage.ts              # LocalStorage 永続化
+│   ├── state.ts                # アプリ状態変数
+│   ├── settings.ts             # 設定パネル
+│   ├── version.ts              # バージョン定義
+│   ├── style.css               # スタイル
+│   ├── vite-env.d.ts           # Vite / PWA 型定義
+│   ├── types/
+│   │   ├── app.ts              # アプリ共通型定義
+│   │   ├── labelme.ts          # LabelMe JSON 型定義
+│   │   └── storage.ts          # Storage 型定義
+│   └── ui/
+│       ├── confirm.ts          # 確認ボタン
+│       ├── labelList.ts        # ラベルリスト UI
+│       ├── loadScreen.ts       # ロード画面
+│       ├── objectList.ts       # オブジェクトリスト UI
+│       ├── progress.ts         # 進捗表示
+│       └── zoom.ts             # ズーム操作
+├── tasks/
+│   └── types/                  # 型定義の原本（src/types/ にコピー済み）
+├── tools/
+│   ├── setup-phase3.ps1        # TypeScript 移行 事前準備スクリプト
+│   └── rename-to-ts.ps1        # .js → .ts リネームスクリプト
+├── public/
+│   └── CHANGELOG/
+└── icons/
 ```
 
 ---
 
-## 🔖 バージョン管理
+## 開発者向けセットアップ
 
-### 新バージョンをリリースする手順
+### 必要なもの
 
-1. **`version.js` を更新する**
+- Node.js 18 以上
+- npm 9 以上
+- Git
 
-```js
-const APP_VERSION = {
-  version: '1.2.0',           // バージョン番号
-  date: '2026-07-01',         // リリース日
-  docFile: 'doc/vX-X-X.md',  // リリースノートのパス（.を-に置換）
-  githubRepo: 'https://github.com/DTT-JP/PenAno',
-};
+### 手順
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/DTT-JP/PenAno.git
+cd PenAno
+
+# 2. 依存パッケージをインストール
+npm install
+
+# 3. 開発サーバーを起動
+npm run dev
 ```
 
-2. **`doc/vX-X-X.md` を作成する**（Markdown形式で自由に記述）
+ブラウザで `http://localhost:5173` を開くと起動します。
 
-```markdown
-# v1.2.0 – 2026-07-01
+### ビルド
 
-## 🆕 新機能
-- 〇〇機能を追加
-
-## 🔧 変更点
-- △△を改善
-
-## 🐛 修正
-- □□のバグを修正
+```bash
+npm run build
 ```
 
-3. **`doc/CHANGELOG.md` に追記する**（過去版一覧として GitHub で参照される）
-
-4. **`sw.js` のキャッシュ名を更新する**（古いキャッシュを破棄するため）
-
-```js
-const CACHE_NAME = 'penano-vX-X-X';  // バージョンに合わせて変更
-```
-
-5. コミット・プッシュする
+`dist/` フォルダにビルド成果物が出力されます。
 
 ---
 
-## 🔧 LabelMe JSON 形式
+## Cloudflare Pages へのデプロイ
 
-```json
-{
-  "version": "5.0.1",
-  "flags": {},
-  "shapes": [
-    {
-      "label": "car",
-      "points": [[100, 200], [300, 400]],
-      "group_id": null,
-      "shape_type": "rectangle",
-      "flags": {}
-    }
-  ],
-  "imagePath": "photo.jpg",
-  "imageData": null,
-  "imageHeight": 1080,
-  "imageWidth": 1920
-}
+GitHub リポジトリと連携して自動デプロイします。
+
+### 1. GitHub にリポジトリを作成してプッシュ
+
+GitHub で新しいリポジトリを作成し、以下のコマンドでプッシュします。
+
+```bash
+git remote add origin https://github.com/<ユーザー名>/<リポジトリ名>.git
+git branch -M main
+git push -u origin main
 ```
 
-> **注意**: 現在は `shape_type: "rectangle"` のみサポートしています。
+### 2. Cloudflare Pages にログイン
+
+[https://dash.cloudflare.com](https://dash.cloudflare.com) にアクセスしてログインします。
+
+### 3. プロジェクトを作成する
+
+1. 左メニューから **Workers & Pages** を選択
+2. **Create application** → **Pages** タブを選択
+3. **Connect to Git** をクリック
+4. GitHub アカウントを連携し、対象リポジトリを選択して **Begin setup** をクリック
+
+### 4. ビルド設定を入力する
+
+| 項目 | 値 |
+|------|-----|
+| Production branch | `main` |
+| Framework preset | `None`（手動設定） |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | （空欄のまま） |
+
+**Environment variables（環境変数）の設定は不要です。**
+
+### 5. デプロイを実行する
+
+**Save and Deploy** をクリックするとビルドが始まります。完了後、`https://<プロジェクト名>.pages.dev` でアクセスできます。
+
+### 6. 以降の自動デプロイ
+
+`main` ブランチにプッシュするたびに自動でビルド・デプロイされます。
+
+```bash
+git add .
+git commit -m "更新内容"
+git push
+```
 
 ---
 
-## 📋 データ保存について
+## ライセンス
 
-- **ラベル色**: localStorage に保存（キー: `lme_label_colors`）
-- **確認済みフラグ**: localStorage に保存（キー: `lme_confirmed`）
-- **編集済みアノテーション**: localStorage に自動保存（再読み込み時も復元）
-- **エクスポート**: 設定メニュー → ZIPで書き出す
+MIT License — Copyright (c) 2026 DTT-JP
 
----
+詳細は [LICENSE](./LICENSE) を参照してください。
 
-## ⚠️ 動作環境
-
-- **推奨**: iPad + Safari + Apple Pencil
-- **対応**: デスクトップブラウザ（Chrome, Firefox, Safari, Edge）でもマウス操作で利用可能
-- **必須**: JavaScript 有効、localStorage 利用可能
-- **PWA**: iOS Safari 16.4以降 / Android Chrome 対応
-
----
-
-## 📝 技術メモ
-
-- 外部依存は **JSZip**（ZIP操作）と **marked.js**（Markdownレンダリング）のみ
-- フレームワーク不使用 – Vanilla JavaScript
-- Service Worker によるオフライン対応（PWA）
-- SVGオーバーレイでアノテーション描画
-- ポインタイベント + タッチイベントの二重バインドで Pencil と指を区別
+サードパーティライブラリのライセンスは [THIRD-PARTY-NOTICES.txt](./THIRD-PARTY-NOTICES.txt) を参照してください。

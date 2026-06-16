@@ -1,10 +1,10 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
-/* ui/confirm.js - 確認ボタン処理 */
-import DataManager from '../data.js';
-import Storage from '../storage.js';
-import { updateProgressStats } from './progress.js';
+/* ui/confirm.ts - 確認ボタン処理 */
+import DataManager from '../data';
+import Storage from '../storage';
+import { updateProgressStats } from './progress';
 
-export function toggleConfirm() {
+export function toggleConfirm(): void {
   const file = DataManager.current();
   if (!file) return;
   const sid = DataManager.getSessionId();
@@ -14,9 +14,9 @@ export function toggleConfirm() {
   updateProgressStats();
 }
 
-export function updateConfirmButton(filename, sid) {
-  const btnConfirm = document.getElementById('btnConfirm');
-  const confirmLabel = document.getElementById('confirmLabel');
+export function updateConfirmButton(filename: string, sid: string | null): void {
+  const btnConfirm = document.getElementById('btnConfirm') as HTMLElement;
+  const confirmLabel = document.getElementById('confirmLabel') as HTMLElement;
   const confirmed = sid ? Storage.isConfirmed(sid, filename) : false;
   if (confirmed) {
     btnConfirm.classList.add('confirmed');

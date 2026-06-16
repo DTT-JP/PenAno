@@ -1,14 +1,15 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
-/* ui/objectList.js - オブジェクトリスト UI */
-import DataManager from '../data.js';
-import CanvasManager from '../canvas.js';
-import { _labelColors } from '../state.js';
+/* ui/objectList.ts - オブジェクトリスト UI */
+import DataManager from '../data';
+import CanvasManager from '../canvas';
+import { _labelColors } from '../state';
+import type { LabelMeShape } from '../types/labelme';
 
-export function renderObjectList(shapes) {
-  const objectList = document.getElementById('objectList');
-  const objCount = document.getElementById('objCount');
+export function renderObjectList(shapes: LabelMeShape[]): void {
+  const objectList = document.getElementById('objectList') as HTMLElement;
+  const objCount = document.getElementById('objCount') as HTMLElement;
   objectList.innerHTML = '';
-  objCount.textContent = shapes ? shapes.length : 0;
+  objCount.textContent = shapes ? String(shapes.length) : '0';
   if (!shapes) return;
   const selectedIdx = CanvasManager.getSelectedIdx();
   for (let i = 0; i < shapes.length; i++) {
@@ -35,7 +36,7 @@ export function renderObjectList(shapes) {
   }
 }
 
-export function deleteObject(idx) {
+export function deleteObject(idx: number): void {
   const file = DataManager.current();
   if (!file) return;
   DataManager.removeShape(file, idx);

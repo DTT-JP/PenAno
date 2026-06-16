@@ -1,13 +1,13 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
-/* ui/labelList.js - ラベルリスト UI */
-import DataManager from '../data.js';
-import Storage from '../storage.js';
-import CanvasManager from '../canvas.js';
-import { _labels, _labelColors, _activeLabel, setLabels, setActiveLabel } from '../state.js';
-import { renderObjectList } from './objectList.js';
+/* ui/labelList.ts - ラベルリスト UI */
+import DataManager from '../data';
+import Storage from '../storage';
+import CanvasManager from '../canvas';
+import { _labels, _labelColors, _activeLabel, setLabels, setActiveLabel } from '../state';
+import { renderObjectList } from './objectList';
 
-export function renderLabelList() {
-  const labelList = document.getElementById('labelList');
+export function renderLabelList(): void {
+  const labelList = document.getElementById('labelList') as HTMLElement;
   labelList.innerHTML = '';
   for (const label of _labels) {
     const color = _labelColors[label] || '#2563eb';
@@ -25,7 +25,7 @@ export function renderLabelList() {
     colorInput.value = color;
     colorInput.addEventListener('input', e => {
       e.stopPropagation();
-      const newColor = e.target.value;
+      const newColor = (e.target as HTMLInputElement).value;
       swatch.style.background = newColor;
       _labelColors[label] = newColor;
       const sid = DataManager.getSessionId();
@@ -52,7 +52,7 @@ export function renderLabelList() {
   }
 }
 
-export function onLabelItemClick(label) {
+export function onLabelItemClick(label: string): void {
   setActiveLabel(label);
   const mode = CanvasManager.getMode();
   const selIdx = CanvasManager.getSelectedIdx();
@@ -71,10 +71,10 @@ export function onLabelItemClick(label) {
   renderLabelList();
 }
 
-export function onAddLabel() {
-  const newLabelInput = document.getElementById('newLabelInput');
-  const newLabelColor = document.getElementById('newLabelColor');
-  const addLabelForm = document.getElementById('addLabelForm');
+export function onAddLabel(): void {
+  const newLabelInput = document.getElementById('newLabelInput') as HTMLInputElement;
+  const newLabelColor = document.getElementById('newLabelColor') as HTMLInputElement;
+  const addLabelForm = document.getElementById('addLabelForm') as HTMLElement;
   const name = newLabelInput.value.trim();
   if (!name) return;
   if (_labels.includes(name)) { alert('このラベルは既に存在します。'); return; }
@@ -91,7 +91,7 @@ export function onAddLabel() {
   CanvasManager.setLabelColors(_labelColors);
 }
 
-export function deleteLabel(label) {
+export function deleteLabel(label: string): void {
   if (!confirm(`ラベル「${label}」を削除しますか？\nこのラベルを持つ全てのオブジェクトも削除されます。`)) return;
   const sid = DataManager.getSessionId();
   for (const file of DataManager.files) {
