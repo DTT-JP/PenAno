@@ -8,7 +8,7 @@ export const APP_VERSION: {
   docFile: string;
   githubRepo: string;
 } = {
-  version: '0.0.0-dev-es',
+  version: '0.0.0-dev-p4',
   date: '2026-06-11',
   docFile: 'CHANGELOG/v0-0-0.md',
   githubRepo: 'https://github.com/DTT-JP/PenAno',
