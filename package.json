@@ -1,6 +1,6 @@
 {
   "name": "penano",
-  "version": "0.0.0-dev-p4-v2",
+  "version": "0.0.0-dev-p4-v3",
   "description": "<!-- Copyright (c) 2026 DTT-JP. Released under the MIT license. -->\r # PenAno",
   "main": "main.js",
   "directories": {

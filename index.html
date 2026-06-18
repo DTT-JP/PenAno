@@ -287,271 +287,275 @@
     </div>
   </div>
 
-  <!-- Settings Panel -->
-  <div id="flyoutOther" class="flyout-panel">
-    <div class="flyout-header">
-      <span class="flyout-title">設定</span>
-      <button class="flyout-close" data-close-flyout>×</button>
-    </div>
+  <!-- ═══════════════════════════════════════════════════════
+       Settings Modal (中央ポップアップ)
+  ════════════════════════════════════════════════════════ -->
+  <div id="settingsModalOverlay" class="settings-modal-overlay">
+    <div id="flyoutOther" class="settings-modal-panel">
+      <div class="flyout-header">
+        <span class="flyout-title">設定</span>
+        <button class="flyout-close" data-close-settings>×</button>
+      </div>
 
-    <div class="settings-panel">
+      <div class="settings-panel">
 
-      <!-- ── Left nav ─────────────────────────────────────── -->
-      <nav class="settings-nav" id="settingsNav">
+        <!-- ── Left nav ─────────────────────────────────────── -->
+        <nav class="settings-nav" id="settingsNav">
 
-        <span class="settings-nav-label">アクション</span>
+          <span class="settings-nav-label">アクション</span>
 
-        <button class="settings-nav-item active" data-pane="pane-save">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="7,10 12,15 17,10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          保存
-        </button>
-
-        <button class="settings-nav-item" data-pane="pane-open">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-          </svg>
-          開く
-        </button>
-
-        <div class="settings-nav-separator"></div>
-        <span class="settings-nav-label">設定</span>
-
-        <button class="settings-nav-item" data-pane="pane-display">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
-          </svg>
-          表示
-        </button>
-
-        <button class="settings-nav-item" data-pane="pane-annotation">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="M9 9h6M9 13h4"/>
-          </svg>
-          アノテーション
-        </button>
-
-        <button class="settings-nav-item" data-pane="pane-input">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 19l-7-7 7-7"/>
-            <path d="M19 12H5"/>
-          </svg>
-          入力
-        </button>
-
-        <div class="settings-nav-separator"></div>
-        <span class="settings-nav-label">データ管理</span>
-
-        <button class="settings-nav-item" data-pane="pane-sessions">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
-          セッション管理
-        </button>
-
-        <div class="settings-nav-separator"></div>
-        <span class="settings-nav-label">アプリ</span>
-
-        <button class="settings-nav-item" data-pane="pane-about">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          バージョン情報
-        </button>
-
-      </nav>
-
-      <!-- ── Right detail ──────────────────────────────────── -->
-      <div class="settings-detail" id="settingsDetail">
-
-        <!-- 保存 -->
-        <div class="settings-pane active" id="pane-save">
-          <p class="pane-title">保存</p>
-          <button class="settings-action-btn primary" id="btnDownloadZip">
+          <button class="settings-nav-item active" data-pane="pane-save">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="7,10 12,15 17,10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            ZIPで書き出す
+            保存
           </button>
-          <p class="settings-desc">編集済みのアノテーションをZIPファイルとしてダウンロードします。画像は含まれません。</p>
-        </div>
 
-        <!-- 開く -->
-        <div class="settings-pane" id="pane-open">
-          <p class="pane-title">開く</p>
-          <button class="settings-action-btn" id="btnReload">
+          <button class="settings-nav-item" data-pane="pane-open">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
             </svg>
-            フォルダ／ZIPを開く
+            開く
           </button>
-          <p class="settings-desc">現在のセッションを終了し、別のデータセットを読み込みます。未保存の変更はlocalStorageに保持されます。</p>
-          <div style="height:10px;"></div>
-          <p class="pane-title">セッション終了</p>
-          <button class="settings-action-btn danger" id="btnClearSession">
+
+          <div class="settings-nav-separator"></div>
+          <span class="settings-nav-label">設定</span>
+
+          <button class="settings-nav-item" data-pane="pane-display">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3,6 5,6 21,6"/>
-              <path d="M19 6l-1 14H6L5 6"/>
-              <path d="M10 11v6M14 11v6"/>
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
             </svg>
-            すべての保存データを消去
+            表示
           </button>
-          <p class="settings-desc">localStorageに保存されたすべてのアノテーション・確認フラグ・ラベルカラーを削除します。</p>
-        </div>
 
-        <!-- 表示 -->
-        <div class="settings-pane" id="pane-display">
-          <p class="pane-title">表示設定</p>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">アノテーション表示</span>
-              <span class="tl-desc">矩形と塗りつぶしを表示</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="toggleShowAnnot" checked>
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">ラベル名を表示</span>
-              <span class="tl-desc">矩形の上にラベルを重ねる</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="toggleShowLabel">
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div style="height:10px;"></div>
-          <p class="pane-title">塗りつぶし濃度</p>
-          <div class="settings-segment" id="segmentFill">
-            <button class="segment-option" data-val="0.08">薄い</button>
-            <button class="segment-option active" data-val="0.20">標準</button>
-            <button class="segment-option" data-val="0.40">濃い</button>
-          </div>
-        </div>
-
-        <!-- アノテーション -->
-        <div class="settings-pane" id="pane-annotation">
-          <p class="pane-title">矩形スタイル</p>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">角を丸める</span>
-              <span class="tl-desc">矩形の角をわずかに丸める</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="toggleRoundedRect">
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">描画後に選択</span>
-              <span class="tl-desc">追加した矩形を自動選択</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="toggleSelectAfterDraw" checked>
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div style="height:10px;"></div>
-          <p class="pane-title">ハンドルサイズ</p>
-          <div class="settings-segment" id="segmentHandle">
-            <button class="segment-option" data-val="4">小</button>
-            <button class="segment-option active" data-val="6">中</button>
-            <button class="segment-option" data-val="9">大</button>
-          </div>
-        </div>
-
-        <!-- 入力 -->
-        <div class="settings-pane" id="pane-input">
-          <p class="pane-title">ポインター設定</p>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">指でパン</span>
-              <span class="tl-desc">Pencil以外でも画像を移動</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="toggleFingerPan" checked>
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-label">
-              <span class="tl-name">ピンチでズーム</span>
-              <span class="tl-desc">2本指のピンチ操作</span>
-            </div>
-            <label class="ios-toggle">
-              <input type="checkbox" id="togglePinchZoom" checked>
-              <span class="ios-toggle-track"></span>
-              <span class="ios-toggle-thumb"></span>
-            </label>
-          </div>
-          <div style="height:10px;"></div>
-          <p class="pane-title">最小矩形サイズ (px)</p>
-          <div class="settings-segment" id="segmentMinSize">
-            <button class="segment-option" data-val="2">2</button>
-            <button class="segment-option active" data-val="4">4</button>
-            <button class="segment-option" data-val="8">8</button>
-            <button class="segment-option" data-val="16">16</button>
-          </div>
-        </div>
-
-        <!-- セッション管理 -->
-        <div class="settings-pane" id="pane-sessions">
-          <p class="pane-title">保存済みセッション</p>
-          <p class="settings-desc" style="margin-bottom:10px;">フォルダ／ZIPを開くたびにセッションが作成されます。ラベルカラーをセッション間でコピーしたり、不要なデータを削除できます。</p>
-          <div id="sessionListContainer"></div>
-        </div>
-
-        <!-- バージョン情報 -->
-        <div class="settings-pane" id="pane-about">
-          <p class="pane-title">アプリ情報</p>
-          <div class="settings-info-row">
-            <span class="sir-label">アプリ名</span>
-            <span class="sir-value">PenAno</span>
-          </div>
-          <div class="settings-info-row">
-            <span class="sir-label">バージョン</span>
-            <span class="sir-value" id="settingsVersionVal">—</span>
-          </div>
-          <div class="settings-info-row">
-            <span class="sir-label">リリース日</span>
-            <span class="sir-value" id="settingsDateVal">—</span>
-          </div>
-          <div style="height:10px;"></div>
-          <button class="settings-action-btn" id="btnVersionInfo">
+          <button class="settings-nav-item" data-pane="pane-annotation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
-              <line x1="12" y1="13" x2="12" y2="17"/>
-              <line x1="12" y1="9" x2="12.01" y2="9"/>
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 9h6M9 13h4"/>
             </svg>
-            リリースノートを見る
+            アノテーション
           </button>
-          <p class="settings-desc">すべてのデータはローカルで処理されます。画像・アノテーションはインターネットに送信されません。</p>
-        </div>
 
-      </div><!-- /settings-detail -->
-    </div><!-- /settings-panel -->
-  </div><!-- /flyoutOther -->
+          <button class="settings-nav-item" data-pane="pane-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 19l-7-7 7-7"/>
+              <path d="M19 12H5"/>
+            </svg>
+            入力
+          </button>
+
+          <div class="settings-nav-separator"></div>
+          <span class="settings-nav-label">データ管理</span>
+
+          <button class="settings-nav-item" data-pane="pane-sessions">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            セッション管理
+          </button>
+
+          <div class="settings-nav-separator"></div>
+          <span class="settings-nav-label">アプリ</span>
+
+          <button class="settings-nav-item" data-pane="pane-about">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            バージョン情報
+          </button>
+
+        </nav>
+
+        <!-- ── Right detail ──────────────────────────────────── -->
+        <div class="settings-detail" id="settingsDetail">
+
+          <!-- 保存 -->
+          <div class="settings-pane active" id="pane-save">
+            <p class="pane-title">保存</p>
+            <button class="settings-action-btn primary" id="btnDownloadZip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              ZIPで書き出す
+            </button>
+            <p class="settings-desc">編集済みのアノテーションをZIPファイルとしてダウンロードします。画像は含まれません。</p>
+          </div>
+
+          <!-- 開く -->
+          <div class="settings-pane" id="pane-open">
+            <p class="pane-title">開く</p>
+            <button class="settings-action-btn" id="btnReload">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+              </svg>
+              フォルダ／ZIPを開く
+            </button>
+            <p class="settings-desc">現在のセッションを終了し、別のデータセットを読み込みます。未保存の変更はlocalStorageに保持されます。</p>
+            <div style="height:10px;"></div>
+            <p class="pane-title">セッション終了</p>
+            <button class="settings-action-btn danger" id="btnClearSession">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+              </svg>
+              すべての保存データを消去
+            </button>
+            <p class="settings-desc">localStorageに保存されたすべてのアノテーション・確認フラグ・ラベルカラーを削除します。</p>
+          </div>
+
+          <!-- 表示 -->
+          <div class="settings-pane" id="pane-display">
+            <p class="pane-title">表示設定</p>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">アノテーション表示</span>
+                <span class="tl-desc">矩形と塗りつぶしを表示</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="toggleShowAnnot" checked>
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">ラベル名を表示</span>
+                <span class="tl-desc">矩形の上にラベルを重ねる</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="toggleShowLabel">
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div style="height:10px;"></div>
+            <p class="pane-title">塗りつぶし濃度</p>
+            <div class="settings-segment" id="segmentFill">
+              <button class="segment-option" data-val="0.08">薄い</button>
+              <button class="segment-option active" data-val="0.20">標準</button>
+              <button class="segment-option" data-val="0.40">濃い</button>
+            </div>
+          </div>
+
+          <!-- アノテーション -->
+          <div class="settings-pane" id="pane-annotation">
+            <p class="pane-title">矩形スタイル</p>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">角を丸める</span>
+                <span class="tl-desc">矩形の角をわずかに丸める</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="toggleRoundedRect">
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">描画後に選択</span>
+                <span class="tl-desc">追加した矩形を自動選択</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="toggleSelectAfterDraw" checked>
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div style="height:10px;"></div>
+            <p class="pane-title">ハンドルサイズ</p>
+            <div class="settings-segment" id="segmentHandle">
+              <button class="segment-option" data-val="4">小</button>
+              <button class="segment-option active" data-val="6">中</button>
+              <button class="segment-option" data-val="9">大</button>
+            </div>
+          </div>
+
+          <!-- 入力 -->
+          <div class="settings-pane" id="pane-input">
+            <p class="pane-title">ポインター設定</p>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">指でパン</span>
+                <span class="tl-desc">Pencil以外でも画像を移動</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="toggleFingerPan" checked>
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="settings-toggle-row">
+              <div class="settings-toggle-label">
+                <span class="tl-name">ピンチでズーム</span>
+                <span class="tl-desc">2本指のピンチ操作</span>
+              </div>
+              <label class="ios-toggle">
+                <input type="checkbox" id="togglePinchZoom" checked>
+                <span class="ios-toggle-track"></span>
+                <span class="ios-toggle-thumb"></span>
+              </label>
+            </div>
+            <div style="height:10px;"></div>
+            <p class="pane-title">最小矩形サイズ (px)</p>
+            <div class="settings-segment" id="segmentMinSize">
+              <button class="segment-option" data-val="2">2</button>
+              <button class="segment-option active" data-val="4">4</button>
+              <button class="segment-option" data-val="8">8</button>
+              <button class="segment-option" data-val="16">16</button>
+            </div>
+          </div>
+
+          <!-- セッション管理 -->
+          <div class="settings-pane" id="pane-sessions">
+            <p class="pane-title">保存済みセッション</p>
+            <p class="settings-desc" style="margin-bottom:10px;">フォルダ／ZIPを開くたびにセッションが作成されます。ラベルカラーをセッション間でコピーしたり、不要なデータを削除できます。</p>
+            <div id="sessionListContainer"></div>
+          </div>
+
+          <!-- バージョン情報 -->
+          <div class="settings-pane" id="pane-about">
+            <p class="pane-title">アプリ情報</p>
+            <div class="settings-info-row">
+              <span class="sir-label">アプリ名</span>
+              <span class="sir-value">PenAno</span>
+            </div>
+            <div class="settings-info-row">
+              <span class="sir-label">バージョン</span>
+              <span class="sir-value" id="settingsVersionVal">—</span>
+            </div>
+            <div class="settings-info-row">
+              <span class="sir-label">リリース日</span>
+              <span class="sir-value" id="settingsDateVal">—</span>
+            </div>
+            <div style="height:10px;"></div>
+            <button class="settings-action-btn" id="btnVersionInfo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="12" y1="13" x2="12" y2="17"/>
+                <line x1="12" y1="9" x2="12.01" y2="9"/>
+              </svg>
+              リリースノートを見る
+            </button>
+            <p class="settings-desc">すべてのデータはローカルで処理されます。画像・アノテーションはインターネットに送信されません。</p>
+          </div>
+
+        </div><!-- /settings-detail -->
+      </div><!-- /settings-panel -->
+    </div><!-- /settings-modal-panel -->
+  </div><!-- /settingsModalOverlay -->
 
   <!-- ═══════════════════════════════════════════════════════
        Version Modal

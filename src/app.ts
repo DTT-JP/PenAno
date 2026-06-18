@@ -11,7 +11,7 @@ import Storage from './storage';
 import { initSettings } from './settings';
 import { APP_VERSION } from './version';
 import { _labelColors, setLabelColors } from './state';
-import { initFlyouts, openFlyout, closeFlyout } from './flyout';
+import { initFlyouts, openFlyout, closeFlyout, openSettings, closeSettings } from './flyout';
 import { showVersionModal, closeVersionModal } from './versionModal';
 import { onDownloadZip } from './downloadZip';
 import { initLabels, showCurrentImage } from './imageNav';
@@ -140,7 +140,9 @@ function bindEvents(): void {
     openFlyout('progress');
   });
   $('btnObjPanel').addEventListener('click', () => openFlyout('objects'));
-  $('btnOtherMenu').addEventListener('click', () => openFlyout('other'));
+
+  // その他メニュー → 設定モーダル（中央ポップアップ）
+  $('btnOtherMenu').addEventListener('click', () => openSettings());
 
   $('flyoutOverlay').addEventListener('click', () => closeFlyout());
   document.querySelectorAll<HTMLElement>('[data-close-flyout]').forEach(btn =>
@@ -177,13 +179,13 @@ function bindEvents(): void {
     }
   });
 
-  // ── その他メニュー ────────────────────────────────────────────────────────
+  // ── その他メニュー内アクション ────────────────────────────────────────────
   $('btnDownloadZip').addEventListener('click', () => {
-    closeFlyout();
+    closeSettings();
     onDownloadZip();
   });
   $('btnReload').addEventListener('click', () => {
-    closeFlyout();
+    closeSettings();
     const loadScreenEls: LoadScreenElements = {
       app: $('app'),
       loadScreen: $('loadScreen'),
@@ -194,7 +196,7 @@ function bindEvents(): void {
     showLoadScreen(loadScreenEls);
   });
   $('btnVersionInfo').addEventListener('click', () => {
-    closeFlyout();
+    closeSettings();
     showVersionModal();
   });
 
