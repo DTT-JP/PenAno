@@ -5,11 +5,15 @@
 export const APP_VERSION: {
   version: string;
   date: string;
-  docFile: string;
+  /**
+   * public/changelogs/index.json 内の ChangelogEntry.version と対応するキー。
+   * 個別HTMLファイル名は `${changelogVersion}.${lang}.html` になる。
+   */
+  changelogVersion: string;
   githubRepo: string;
 } = {
-  version: '0.0.0-dev-p4-v3',
-  date: '2026-06-11',
-  docFile: 'CHANGELOG/v0-0-0.md',
+  version: '0.0.0-dev-p4-v4',
+  date: '2026-06-18',
+  changelogVersion: 'v0-0-0',
   githubRepo: 'https://github.com/DTT-JP/PenAno',
 };

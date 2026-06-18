@@ -80,42 +80,65 @@
 
 ---
 
+## リリースノート（Changelog）の仕組み
+
+リリースノートの Markdown ソースは `changelogs/<lang>/<version>.md` に置きます（現在は `ja` のみ）。`vite build`（および `vite dev` 起動時）に Vite プラグインが自動的に Markdown を HTML へ変換し、`public/changelogs/` 以下へ次の2種類のファイルを生成します。
+
+- `<version>.<lang>.html` — バージョン単位の個別 HTML ファイル
+- `index.json` — 全バージョン・全言語のメタ情報と本文 HTML をまとめたインデックス
+
+アプリ側はビルド時に生成された `index.json` を `src/changelogClient.ts` 経由で取得して表示するだけで、実行時に Markdown をパースすることはありません。多言語対応の追加（言語ディレクトリを増やす）や、保持するバージョン数の上限（ストレージ対策）は `build-tools/changelog-config.ts` を編集するだけで反映されます。
+
+`src/changelogClient.ts` はバージョン情報モーダル専用ではなく、将来追加されるかもしれない別の表示先（ロード画面の最新情報パネルなど）からも同じ関数で利用できる汎用 API として用意しています。
+
+---
+
 ## ファイル構成
 
 ```
 PenAno/
 ├── index.html                  # エントリーポイント
-├── vite.config.ts              # Vite 設定
+├── vite.config.ts              # Vite 設定（changelogsPlugin を含む）
 ├── tsconfig.json               # TypeScript 設定
 ├── package.json
+├── changelogs/                 # リリースノートの Markdown ソース
+│   └── ja/
+│       └── v0-0-0.md
+├── build-tools/                # ビルド時スクリプト（アプリ本体には含まれない）
+│   ├── changelog-config.ts     # changelog 変換設定（多言語・保持件数など）
+│   ├── build-changelogs.ts     # md → HTML 変換・index.json 生成の実体
+│   └── vite-plugin-changelogs.ts # 上記を vite のビルドフックに接続する薄いプラグイン
 ├── src/
 │   ├── main.ts                 # メインロジック
-│   ├── canvas.ts               # 画像表示・アノテーション描画
-│   ├── data.ts                 # ファイル読み込み・JSON管理
-│   ├── storage.ts              # LocalStorage 永続化
-│   ├── state.ts                # アプリ状態変数
-│   ├── settings.ts             # 設定パネル
-│   ├── version.ts              # バージョン定義
-│   ├── style.css               # スタイル
-│   ├── vite-env.d.ts           # Vite / PWA 型定義
+│   ├── canvas.ts                # 画像表示・アノテーション描画
+│   ├── data.ts                  # ファイル読み込み・JSON管理
+│   ├── storage.ts               # LocalStorage 永続化
+│   ├── state.ts                 # アプリ状態変数
+│   ├── settings.ts              # 設定パネル
+│   ├── version.ts               # バージョン定義（changelogVersion を含む）
+│   ├── versionModal.ts          # バージョン情報モーダル（changelogClient を利用）
+│   ├── changelogClient.ts       # index.json 取得・解決の共通アクセス層
+│   ├── style.css                # スタイル
+│   ├── vite-env.d.ts            # Vite / PWA 型定義
 │   ├── types/
-│   │   ├── app.ts              # アプリ共通型定義
-│   │   ├── labelme.ts          # LabelMe JSON 型定義
-│   │   └── storage.ts          # Storage 型定義
+│   │   ├── app.ts               # アプリ共通型定義
+│   │   ├── labelme.ts           # LabelMe JSON 型定義
+│   │   ├── storage.ts           # Storage 型定義
+│   │   └── changelog.ts         # リリースノートの汎用データ構造
 │   └── ui/
-│       ├── confirm.ts          # 確認ボタン
-│       ├── labelList.ts        # ラベルリスト UI
-│       ├── loadScreen.ts       # ロード画面
-│       ├── objectList.ts       # オブジェクトリスト UI
-│       ├── progress.ts         # 進捗表示
-│       └── zoom.ts             # ズーム操作
+│       ├── confirm.ts           # 確認ボタン
+│       ├── labelList.ts         # ラベルリスト UI
+│       ├── loadScreen.ts        # ロード画面
+│       ├── objectList.ts        # オブジェクトリスト UI
+│       ├── progress.ts          # 進捗表示
+│       └── zoom.ts              # ズーム操作
 ├── tasks/
 │   └── types/                  # 型定義の原本（src/types/ にコピー済み）
 ├── tools/
 │   ├── setup-phase3.ps1        # TypeScript 移行 事前準備スクリプト
 │   └── rename-to-ts.ps1        # .js → .ts リネームスクリプト
 ├── public/
-│   └── CHANGELOG/
+│   └── changelogs/              # ビルド生成物（個別HTML + index.json）。git管理外推奨
 └── icons/
 ```
 
@@ -143,7 +166,7 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:5173` を開くと起動します。
+ブラウザで `http://localhost:5173` を開くと起動します。開発サーバー起動時に `public/changelogs/` が自動生成されます。
 
 ### ビルド
 
@@ -151,7 +174,7 @@ npm run dev
 npm run build
 ```
 
-`dist/` フォルダにビルド成果物が出力されます。
+`dist/` フォルダにビルド成果物が出力されます。ビルド開始時に `changelogs/` 以下の Markdown が `public/changelogs/` へ自動変換されます。
 
 ---
 

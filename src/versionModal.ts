@@ -1,9 +1,12 @@
 /* Copyright (c) 2026 DTT-JP. Released under the MIT license. */
 /**
  * versionModal.ts – バージョン情報モーダルの表示・非表示
+ *
+ * リリースノート本文は public/changelogs/index.json（ビルド時に事前HTML化済み）から
+ * changelogClient 経由で取得する。ランタイムでの Markdown パースは行わない。
  */
-import { marked } from 'marked';
 import { APP_VERSION } from './version';
+import { getChangelogEntry } from './changelogClient';
 
 function $el<T extends HTMLElement = HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -20,12 +23,10 @@ export async function showVersionModal(): Promise<void> {
   $el('mdContent').innerHTML = '<p style="color:var(--text2);">読み込み中...</p>';
   $el('mdOlderLink').style.display = 'none';
 
-  const docUrl = new URL(ver.docFile, document.baseURI).href + '?t=' + Date.now();
   try {
-    const res = await fetch(docUrl);
-    if (!res.ok) throw new Error('fetch failed: ' + res.status);
-    const md = await res.text();
-    $el('mdContent').innerHTML = marked.parse(md) as string;
+    const entry = await getChangelogEntry(ver.changelogVersion);
+    if (!entry) throw new Error('changelog entry not found: ' + ver.changelogVersion);
+    $el('mdContent').innerHTML = entry.html;
     $el('mdContent').querySelectorAll<HTMLAnchorElement>('a').forEach(a => {
       a.target = '_blank';
       a.rel = 'noopener';

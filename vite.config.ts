@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { changelogsPlugin } from './build-tools/vite-plugin-changelogs'
 
 export default defineConfig({
   root: '.',
@@ -8,6 +9,8 @@ export default defineConfig({
   },
 
   plugins: [
+    changelogsPlugin(),
+
     VitePWA({
       strategies: 'generateSW',
       registerType: 'autoUpdate',
@@ -42,8 +45,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
         runtimeCaching: [
           {
-            // CHANGELOG以下のMarkdownはネットワーク優先
-            urlPattern: /\/CHANGELOG\/.+\.md/,
+            // changelogs以下のJSON/HTMLはネットワーク優先
+            urlPattern: /\/changelogs\/.+\.(json|html)/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'changelog-cache',
