@@ -18,12 +18,13 @@
    13. Flyout: Zoom Panel
    14. Flyout: Progress Panel
    15. Flyout: Object List Panel
-   16. Flyout: Settings Panel (2-column layout)
+   16. Flyout: Settings Panel (2-column layout inner styles)
    17. Settings: Toggles, Segments, Info Rows
    18. Version / Markdown Modal
    19. Markdown Rendering
    20. Session Management Cards
    21. Scrollbar
+   22. Settings Modal (中央ポップアップ)
    ============================================================ */
 
 
@@ -793,19 +794,14 @@ html, body {
 
 
 /* ============================================================
-   16. FLYOUT: SETTINGS PANEL (2-column layout)
+   16. FLYOUT: SETTINGS PANEL (2-column inner layout styles)
+   ※ 設定パネル自体は .settings-modal-panel に移行（セクション22参照）
    ============================================================ */
-
-/* Wider panel for the settings flyout */
-#flyoutOther {
-  width: 520px;
-  max-width: calc(100vw - var(--sidebar-w) - 16px);
-}
 
 .settings-panel {
   display: flex;
   flex-direction: row;
-  height: 100%;
+  flex: 1;
   overflow: hidden;
 }
 
@@ -1271,3 +1267,85 @@ html, body {
 ::-webkit-scrollbar         { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track   { background: transparent; }
 ::-webkit-scrollbar-thumb   { background: var(--border); border-radius: 2px; }
+
+
+/* ============================================================
+   22. SETTINGS MODAL（中央ポップアップ）
+   ============================================================ */
+
+/* オーバーレイ：バージョンモーダルと同じ半透明黒背景・独立した z-index */
+.settings-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1050;   /* バージョンモーダル(1100)より下、flyout(100)より上 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 32px);
+  /* オーバーレイ表示時のフェードイン */
+  animation: settingsOverlayIn 0.22s ease;
+}
+.settings-modal-overlay.open {
+  display: flex;
+}
+
+@keyframes settingsOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* パネル本体 */
+.settings-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  /* 幅・高さ：表示領域に合わせた使いやすいサイズ */
+  width: min(92vw, 720px);
+  height: min(88vh, 560px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* モーダルらしい出現アニメーション */
+  animation: settingsPanelIn 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center center;
+}
+
+@keyframes settingsPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* パネル内ヘッダー（flyout-header を流用） */
+.settings-modal-panel .flyout-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.settings-modal-panel .flyout-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* settings-panel を縦方向に残り全体へ伸ばす */
+.settings-modal-panel .settings-panel {
+  flex: 1;
+  min-height: 0; /* overflow: hidden が効くように */
+}
+
+/* 左ナビの高さをパネルに合わせる */
+.settings-modal-panel .settings-nav {
+  height: 100%;
+}
+
+/* 右詳細エリアの高さもパネルに合わせる */
+.settings-modal-panel .settings-detail {
+  height: 100%;
+}
